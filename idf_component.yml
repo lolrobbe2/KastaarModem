@@ -10,3 +10,7 @@ dependencies:
   esp-modem: ">=1.4.0"
 targets:
   - esp32s3
+
+files:
+    exclude:
+      - "examples/**/*"          # Exclude all Python files
