@@ -13,4 +13,5 @@ targets:
 
 files:
     exclude:
-      - "examples/**/*"          # Exclude all Python files
+      - "examples/**/*"      # Exclude examples folder
+      - "docs/**/*"          # Exclude docs folder
