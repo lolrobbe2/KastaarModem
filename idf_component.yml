@@ -7,7 +7,7 @@ issues: https://github.com/lolrobbe2/KastaarModem/issues
 discussion: https://github.com/lolrobbe2/KastaarModem/discussions
 dependencies:
   idf: ">=5.0"
-  esp-modem: ">=1.4.0"
+  esp_modem: ">=1.4.0"
 targets:
   - esp32s3
 
