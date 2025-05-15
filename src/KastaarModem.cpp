@@ -6,6 +6,8 @@
 #include <esp_netif_defaults.h>
 #include <esp_netif_ppp.h>
 #include <nvs_flash.h>
+#include <driver/gpio.h>
+#include <cxx_include/esp_modem_command_library_utils.hpp>
 
 void KastaarModem::urcHandler(std::string_view line) 
 {
@@ -14,10 +16,12 @@ void KastaarModem::urcHandler(std::string_view line)
 
 esp_modem::command_result KastaarModem::connect()
 {
-  getModule()->connect(pdpContext);
+    if(gm02sDce)
+        return getModule()->connect(pdpContext);
+    return esp_modem::command_result::FAIL;
 }
 
-esp_modem::PdpContext &KastaarModem::getPdpContext() { return pdpContext; }
+const esp_modem::PdpContext &KastaarModem::getPdpContext() { return pdpContext; }
 
 esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len) 
 {
@@ -46,9 +50,9 @@ esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len)
         std::string_view line = view.substr(0, end);
         view.remove_prefix(end + 2); // Move past the line and \r\n
 
-        if (urcHandler) {
-            urcHandler(line);
-        }
+
+        urcHandler(line);
+        
     }
     return esp_modem::command_result::OK;
 }
@@ -75,12 +79,23 @@ bool KastaarModem::init(
   pdpContext.apn = apn;
   pdpContext.context_id = 1;
 
+  gpio_set_direction((gpio_num_t)config.pinReset, GPIO_MODE_OUTPUT);
+  gpio_set_pull_mode((gpio_num_t)config.pinReset, GPIO_FLOATING);
+  gpio_deep_sleep_hold_en();
+
+  gpio_hold_dis((gpio_num_t)config.pinReset);
+  gpio_set_level((gpio_num_t)config.pinReset, 0);
+  vTaskDelay(pdMS_TO_TICKS(10));
+  gpio_set_level((gpio_num_t)config.pinReset, 1);
+  gpio_hold_en((gpio_num_t)config.pinReset);
+  vTaskDelay(pdMS_TO_TICKS(5000));
+
   esp_modem::dce_config dceConfig = ESP_MODEM_DCE_DEFAULT_CONFIG(apn.data());
   if (!uartDTE) {
     esp_modem::dte_config dteConfig = {
-        .dte_buffer_size = 512,
+        .dte_buffer_size = 4096/2,
         .task_stack_size = 4096,
-        .task_priority = 5,
+        .task_priority = 15,
         .uart_config = {
             .port_num = config.uart_no,
             .data_bits = UART_DATA_8_BITS,
@@ -94,7 +109,7 @@ bool KastaarModem::init(
             .rts_io_num = config.pinRTS,
             .cts_io_num = config.pinCTS,
             .rx_buffer_size = 4096,
-            .tx_buffer_size = 512,
+            .tx_buffer_size = 4096,
             .event_queue_size = 30,
         }};
 
@@ -104,7 +119,7 @@ bool KastaarModem::init(
 
     esp_netif_inherent_config_t *netif_ppp_inherent_config =
         (esp_netif_inherent_config_t *)ESP_NETIF_BASE_DEFAULT_PPP;
-    netif_ppp_inherent_config->route_prio = priority;
+    netif_ppp_inherent_config->route_prio = 10;
 
     esp_netif_config_t netif_ppp_config = {
         .base = netif_ppp_inherent_config,
@@ -115,11 +130,62 @@ bool KastaarModem::init(
     pppInterface = esp_netif_new(&netif_ppp_config);
     if (!pppInterface)
       return false;
-
-    Driver::priority = priority;
   }
 
   uartDTE->set_urc_cb(callback);
 
   gm02sDce = esp_modem::create_SQNGM02S_dce(&dceConfig, uartDTE, pppInterface);
+
+  if(sync(3) != esp_modem::command_result::OK){
+    ESP_LOGD("KastaarModem","could not sync the modem");
+    return false;
+  }
+  getModule()->config_mobile_termination_error(2);
+  return gm02sDce.get();
+}
+
+esp_modem::command_result KastaarModem::sync(uint8_t count)
+{
+    for (int i = 0; i < count; i++) {
+        getModule()->sync();
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+    return esp_modem::command_result::OK;
+}
+
+esp_modem::command_result KastaarModem::reset()
+{
+    std::string out;
+    return getModule()->at_raw("AT^RESET\r", out, "+SYSSTART","ERROR",2000);
+}
+
+esp_modem::command_result KastaarModem::command(const std::string &command,
+    const std::string &pass_phrase,
+    const std::string &fail_phrase, uint32_t timeout_ms)
+{
+    return esp_modem::dce_commands::generic_command(
+        (esp_modem::CommandableIf*)KastaarModem::getModule(),
+        command,
+        pass_phrase,
+        fail_phrase,
+        timeout_ms);
+}
+
+esp_modem::command_result KastaarModem::commandCommon(const std::string &command, uint32_t timeout_ms)
+{
+    std::string out = "";
+    esp_modem::command_result res =
+        KastaarModem::getModule()->at(command, out, timeout_ms);
+    if (res != esp_modem::command_result::OK && out.size() > 2) {
+        ESP_LOGD("KastaarModem"," and error occured: %s", out.c_str());
+        return esp_modem::command_result::FAIL;
+    }
+
+    return esp_modem::command_result::OK;
+}
+
+esp_modem::command_result KastaarModem::at(const std::string &command, uint32_t timeout_ms) 
+{
+    std::string out;
+    return KastaarModem::getModule()->at(command,out,timeout_ms);
 }
