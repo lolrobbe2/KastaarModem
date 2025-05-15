@@ -4,5 +4,8 @@
 # CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)
 
-include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(socket_example)
+idf_component_register(
+    SRCS "src/KastaarModem.cpp" "src/proto/socket/Socket.cpp" "src/proto/socket/SocketManager.cpp"
+    INCLUDE_DIRS "src"
+    REQUIRES esp_modem driver nvs_flash
+)
