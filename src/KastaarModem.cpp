@@ -7,13 +7,20 @@
 #include <esp_netif_ppp.h>
 #include <nvs_flash.h>
 
-void KastaarModem::urcHandler(std::string_view line) {
+void KastaarModem::urcHandler(std::string_view line) 
+{
   // TODO URC handeling.
+}
+
+esp_modem::command_result KastaarModem::connect()
+{
+  getModule()->connect(pdpContext);
 }
 
 esp_modem::PdpContext &KastaarModem::getPdpContext() { return pdpContext; }
 
-esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len) {
+esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len) 
+{
     char *mutableData = reinterpret_cast<char *>(data);
 
     std::string_view view(mutableData, len);
@@ -46,8 +53,10 @@ esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len) {
     return esp_modem::command_result::OK;
 }
 
-bool KastaarModem::init(const std::string_view apn,
-                        const HardwareConfig &config) {
+bool KastaarModem::init(
+  const std::string_view apn,
+  const HardwareConfig &config) 
+{
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
       ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
