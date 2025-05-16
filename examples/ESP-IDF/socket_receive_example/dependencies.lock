@@ -1,0 +1,35 @@
+dependencies:
+  espressif/esp_modem:
+    component_hash: b541c3f5765d3ba062c0d004b9ca6da6d0af908293421c2dbe046c537fb2a011
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.1'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.4.0
+  idf:
+    source:
+      type: idf
+    version: 5.4.0
+  lolrobbe2/kastaar-modem:
+    component_hash: 712a5fc4a5ba756162d9b1a99c0e5953abaf8707e44341081c9b9681ca263da3
+    dependencies:
+    - name: idf
+      version: '>=5.0'
+    - name: espressif/esp_modem
+      version: '>=1.4.0'
+    source:
+      git: https://github.com/lolrobbe2/KastaarModem
+      path: .
+      type: git
+    targets:
+    - esp32s3
+    version: 1a905c390cd47a7f8177432bc3252c56fb086569
+direct_dependencies:
+- idf
+- lolrobbe2/kastaar-modem
+manifest_hash: e96a53cca34377f0620f7e2ed7ee2cc531469e37ab63d34ca17a2edb8812b26e
+target: esp32s3
+version: 2.0.0
