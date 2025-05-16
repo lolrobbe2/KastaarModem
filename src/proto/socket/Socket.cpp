@@ -40,14 +40,12 @@ namespace kastaarModem::socket
             return esp_modem::command_result::FAIL;
         }
         if (transmissionDelay > 255) {
-            ESP_LOGD("Socket",
-                    "connection timeout was larger then 255");
+            ESP_LOGD("Socket", "connection timeout was larger then 255");
             return esp_modem::command_result::FAIL;
         }
         #pragma endregion
         
         std::string out;
-        ESP_LOGD("Socket","Config");
         return KastaarModem::commandCommon(
             "AT+SQNSCFG=" 
             + std::to_string(socketId) 
@@ -61,6 +59,77 @@ namespace kastaarModem::socket
             + std::to_string(transmissionDelay)
             ,
             500);
+    }
+    esp_modem::command_result Socket::dial(const std::string& addr, const uint16_t port, const protocol proto, const acceptRemote accept)
+    {
+#pragma region INPUT_CHECKING
+        if(addr.empty()) {
+            ESP_LOGD("Socket", "address was empty");
+            return esp_modem::command_result::FAIL;
+        }
+
+        if(proto > protocol::UDP) {
+            ESP_LOGD("Socket","protocol was out of bounds");
+            return esp_modem::command_result::FAIL;
+        }
+
+        if (accept > acceptRemote::RX_TX && proto == protocol::UDP) {
+            ESP_LOGD("Socket", "acceptRemote was out of bounds");
+            return esp_modem::command_result::FAIL;
+        }
+#pragma endregion
+
+        return KastaarModem::commandCommon(
+            "AT+SQNSD=" + std::to_string(socketId) + "," +
+                std::to_string(proto) + "," + std::to_string(port) + ",\"" +
+                addr + "\",,,1,,0",
+            5000);
+    }
+    esp_modem::command_result Socket::sendMinimal(const std::string& payload, const std::string &ipAddr, const uint16_t port, const releaseAssistanceInformation RAI)
+    {
+        if(payload.size() > 1500){
+            ESP_LOGD("Socket","payload was to large");
+            return esp_modem::command_result::FAIL;
+        }
+        const auto pass = std::list<std::string_view>({"> "});
+        const auto fail = std::list<std::string_view>({"ERROR", "NO CARRIER", "+CME ERROR"});
+        if (RAI == SINGLE_DOWNLINK_ONLY) 
+        {
+            if(KastaarModem::command("AT+SQNSSEND="
+                + std::to_string(socketId)
+                + ",\""
+                + ipAddr
+                + "\","
+                + std::to_string(port)
+                + ","
+                + std::to_string(RAI),
+                pass,
+                fail,
+                20000
+            ) != esp_modem::command_result::OK){
+                return esp_modem::command_result::FAIL;
+            }
+        } else if(KastaarModem::command("AT+SQNSSEND=" 
+            + std::to_string(socketId),
+            pass,
+            fail,
+            20000
+        ) != esp_modem::command_result::OK) {
+            return esp_modem::command_result::FAIL;
+        }
+        std::string terminator = "";
+        terminator.push_back((char)0x1a);
+        return KastaarModem::commandPayload(
+            payload,
+            terminator,
+            20000
+        );
+}
+
+    esp_modem::command_result Socket::sendMinimal(const uint8_t *data, uint8_t len, const std::string &ipAddr, const uint16_t port, const releaseAssistanceInformation RAI)
+    {
+        std::string payload(reinterpret_cast<const char*>(data), len);
+        return sendMinimal(payload,ipAddr,port,RAI);
     }
 }
 #endif

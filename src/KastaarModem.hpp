@@ -5,6 +5,7 @@
 
     #include <hal/uart_types.h>
     #include <esp_netif_types.h>
+    #include <list>
 
     #ifndef DEFAULT_CONFIG
         #define DEFAULT_CONFIG { \
@@ -42,6 +43,7 @@
          */
         static const esp_modem::PdpContext& getPdpContext();
         
+        static esp_modem::command_result waitForConnection();
         /**
          * @brief This is the URC handler function meant for internal use.
          * 
@@ -74,15 +76,28 @@
             return static_cast<esp_modem::SQNGM02S *>(gm02sDce->get_module());
         }
         static esp_modem::DCE *getDCE() {
+           
             return gm02sDce.get();
         }
         static esp_modem::command_result reset();
 
         static esp_modem::command_result sync(uint8_t count);
 
-        static esp_modem::command_result command(const std::string &command,
-            const std::string &pass_phrase,
-            const std::string &fail_phrase, uint32_t timeout_ms);
+        /**
+         * @brief This function sends a command and waits for the payload and then sends it
+         */
+        static esp_modem::command_result
+        commandPayload(const std::string &payload,
+                       const std::string &terminator, uint32_t timeout_ms);
+
+        /**
+         * 
+         */
+        static esp_modem::command_result
+        command(const std::string &command,
+                const std::list<std::string_view> &pass_phrase,
+                const std::list<std::string_view> &fail_phrase,
+                uint32_t timeout_ms);
 
         static esp_modem::command_result commandCommon(const std::string &command, uint32_t timeout_ms);
         

@@ -1,30 +1,45 @@
+#include "cxx17_include/esp_modem_command_library_17.hpp"
 #include <KastaarModem.hpp>
 #include <cxx_include/esp_modem_api.hpp>
-#include <esp_event_loop.h>
+#include <cxx_include/esp_modem_command_library_utils.hpp>
+#include <driver/gpio.h>
+#include <esp_event.h>
 #include <esp_modem_config.h>
 #include <esp_netif.h>
 #include <esp_netif_defaults.h>
 #include <esp_netif_ppp.h>
 #include <nvs_flash.h>
-#include <driver/gpio.h>
-#include <cxx_include/esp_modem_command_library_utils.hpp>
 
 void KastaarModem::urcHandler(std::string_view line) 
 {
-  // TODO URC handeling.
+    ESP_LOGI("KastaarModem", "URC: %.*s", static_cast<int>(line.length()),line.data());
 }
 
 esp_modem::command_result KastaarModem::connect()
 {
-    if(gm02sDce)
-        return getModule()->connect(pdpContext);
+    if(gm02sDce) {
+        esp_modem::command_result res = getModule()->connect(pdpContext);
+        while (res == esp_modem::command_result::TIMEOUT)
+        {
+            res = waitForConnection();
+        }
+        
+    }
     return esp_modem::command_result::FAIL;
 }
 
 const esp_modem::PdpContext &KastaarModem::getPdpContext() { return pdpContext; }
 
+esp_modem::command_result KastaarModem::waitForConnection()
+{
+    const auto pass = std::list<std::string_view>({"+CEREG: 1,1", "+CEREG: 1,5"});
+    const auto fail = std::list<std::string_view>({"ERROR","+CEREG: 1,2","+CEREG: 1,4"});
+    return KastaarModem::command("AT+CEREG?", pass, fail, 1200000);
+}
+
 esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len) 
 {
+    
     char *mutableData = reinterpret_cast<char *>(data);
 
     std::string_view view(mutableData, len);
@@ -32,11 +47,19 @@ esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len)
     /* We iterate over the view until no more URC's have been found */
     while (!view.empty()) {
         /* Attempt to find the end of the urc*/
-        size_t end = view.find("\r\n");
+        size_t start = view.find("\r\n");
 
-        /* No complete line found, nothing to do!*/
+        if (start == std::string_view::npos) {
+            break;
+        }
+
+        // Remove everything before and including first \r\n
+        view.remove_prefix(start + 2);
+
+        // Step 2: Look for the next \r\n (end of URC)
+        size_t end = view.find("\r\n");
         if (end == std::string_view::npos) {
-        break;
+            break;
         }
 
         /*
@@ -44,15 +67,14 @@ esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len)
             This is so we can use C-style strings from the data function in
         string-view
         */
-        mutableData[end] = '\0';
-        mutableData[end + 1] = '\0';
+
 
         std::string_view line = view.substr(0, end);
-        view.remove_prefix(end + 2); // Move past the line and \r\n
 
-
-        urcHandler(line);
+        if(line.starts_with("+"))
+            urcHandler(line);
         
+        view.remove_prefix(end + 2); // Move past the line and \r\n
     }
     return esp_modem::command_result::OK;
 }
@@ -159,16 +181,57 @@ esp_modem::command_result KastaarModem::reset()
     return getModule()->at_raw("AT^RESET\r", out, "+SYSSTART","ERROR",2000);
 }
 
-esp_modem::command_result KastaarModem::command(const std::string &command,
-    const std::string &pass_phrase,
-    const std::string &fail_phrase, uint32_t timeout_ms)
+esp_modem::command_result KastaarModem::commandPayload(const std::string& payload,const std::string& terminator, uint32_t timeout_ms)
 {
-    return esp_modem::dce_commands::generic_command(
-        (esp_modem::CommandableIf*)KastaarModem::getModule(),
-        command,
-        pass_phrase,
-        fail_phrase,
+    const auto pass = std::list<std::string_view>({"OK"});
+    const auto fail = std::list<std::string_view>({"ERROR", "NO CARRIER", "+CME ERROR"});
+    
+    return gm02sDce->command(
+        payload + terminator,
+        [&](uint8_t *data, size_t len) {
+            std::string_view response((char *)data, len);
+            if (data == nullptr || len == 0 || response.empty()) {
+            return esp_modem::command_result::TIMEOUT;
+            }
+            ESP_LOGD("KastaarModem", "Response: %.*s\n", (int)response.length(),
+                    response.data());
+            for (auto &it : pass)
+            if (response.find(it) != std::string::npos) {
+                return esp_modem::command_result::OK;
+            }
+            for (auto &it : fail)
+            if (response.find(it) != std::string::npos) {
+                return esp_modem::command_result::FAIL;
+            }
+            return esp_modem::command_result::TIMEOUT;
+        },
         timeout_ms);
+}
+esp_modem::command_result
+KastaarModem::command(const std::string &command,
+                      const std::list<std::string_view> &pass_phrase,
+                      const std::list<std::string_view> &fail_phrase, uint32_t timeout_ms) {
+  // TODO implement or remove
+  return gm02sDce->command(
+      command + "\r",
+      [&](uint8_t *data, size_t len) {
+        std::string_view response((char *)data, len);
+        if (data == nullptr || len == 0 || response.empty()) {
+          return esp_modem::command_result::TIMEOUT;
+        }
+        ESP_LOGD("KastaarModem", "Response: %.*s\n", (int)response.length(),
+                 response.data());
+        for (auto &it : pass_phrase)
+          if (response.find(it) != std::string::npos) {
+            return esp_modem::command_result::OK;
+          }
+        for (auto &it : fail_phrase)
+          if (response.find(it) != std::string::npos) {
+            return esp_modem::command_result::FAIL;
+          }
+        return esp_modem::command_result::TIMEOUT;
+      },
+      timeout_ms);
 }
 
 esp_modem::command_result KastaarModem::commandCommon(const std::string &command, uint32_t timeout_ms)
@@ -176,11 +239,11 @@ esp_modem::command_result KastaarModem::commandCommon(const std::string &command
     std::string out = "";
     esp_modem::command_result res =
         KastaarModem::getModule()->at(command, out, timeout_ms);
-    if (res != esp_modem::command_result::OK && out.size() > 2) {
+    if (res == esp_modem::command_result::FAIL && out.size() > 2) {
         ESP_LOGD("KastaarModem"," and error occured: %s", out.c_str());
         return esp_modem::command_result::FAIL;
     }
-
+    
     return esp_modem::command_result::OK;
 }
 
