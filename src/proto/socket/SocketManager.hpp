@@ -9,14 +9,16 @@ namespace kastaarModem::socket
      */
     class SocketManager
     {
-    protected:
-        friend class Socket;
-        
+    public:
         /**
          * @brief This is the socket URC handler
          */
         static void urcHandler(std::string_view line);
 
+    protected:
+        friend class Socket;
+        friend class KastaarModem;
+        
         /** */
         static constexpr uint8_t toIndex(uint8_t socketId);
         static uint8_t getFreeSocket(Socket* socket);

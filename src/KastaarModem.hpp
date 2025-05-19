@@ -102,6 +102,8 @@
         static esp_modem::command_result commandCommon(const std::string &command, uint32_t timeout_ms);
         
         static esp_modem::command_result at(const std::string &command, uint32_t timeout_ms);
+
+        static esp_modem::command_result commandCallback(const std::string &command, esp_modem::got_line_cb got_line, uint32_t time_ms);
       private:
         /**
          * @brief This is the internl PDP context that is used
@@ -113,7 +115,7 @@
          */
         inline static esp_modem::esp_netif_t *pppInterface;
 
-        inline static std::shared_ptr<esp_modem::DTE> uartDTE; /* DTE can be reused accross configs */
+        inline static std::shared_ptr<esp_modem::DTE> uartDTE = nullptr; /* DTE can be reused accross configs */
         inline static std::unique_ptr<esp_modem::DCE> gm02sDce;
 
         inline static esp_netif_inherent_config_t netifPPPInherentConfig;

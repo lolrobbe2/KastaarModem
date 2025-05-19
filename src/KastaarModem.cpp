@@ -9,10 +9,27 @@
 #include <esp_netif_defaults.h>
 #include <esp_netif_ppp.h>
 #include <nvs_flash.h>
+#include <proto/socket/SocketManager.hpp>
+
+bool startsWithAny(std::string_view line,
+                   const std::initializer_list<std::string_view> &prefixes) {
+  for (const auto &prefix : prefixes) {
+    if (line.starts_with(prefix)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 void KastaarModem::urcHandler(std::string_view line) 
 {
+    /* this function handles the routing of the URC's*/
     ESP_LOGI("KastaarModem", "URC: %.*s", static_cast<int>(line.length()),line.data());
+    if (startsWithAny(line,{"+SQNSRING: "}))
+    {
+      /* SOCKETS */
+      kastaarModem::socket::SocketManager::urcHandler(line);
+    }
 }
 
 esp_modem::command_result KastaarModem::connect()
@@ -114,8 +131,9 @@ bool KastaarModem::init(
 
   esp_modem::dce_config dceConfig = ESP_MODEM_DCE_DEFAULT_CONFIG(apn.data());
   if (!uartDTE) {
+
     esp_modem::dte_config dteConfig = {
-        .dte_buffer_size = 4096/2,
+        .dte_buffer_size = 4096 / 2,
         .task_stack_size = 4096,
         .task_priority = 15,
         .uart_config = {
@@ -136,6 +154,7 @@ bool KastaarModem::init(
         }};
 
     uartDTE = esp_modem::create_uart_dte(&dteConfig);
+    
     if (!uartDTE)
       return false;
 
@@ -251,4 +270,9 @@ esp_modem::command_result KastaarModem::at(const std::string &command, uint32_t 
 {
     std::string out;
     return KastaarModem::getModule()->at(command,out,timeout_ms);
+}
+
+esp_modem::command_result KastaarModem::commandCallback(const std::string& command, esp_modem::got_line_cb got_line, uint32_t time_ms)
+{
+  return gm02sDce->command(command + "\r", got_line, time_ms);
 }

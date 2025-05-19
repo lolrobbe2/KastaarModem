@@ -5,6 +5,7 @@
 #include <esp_log.h>
 #include "SocketManager.hpp"
 #include "Socket.hpp"
+#include <string.h>
 
 namespace kastaarModem::socket
 {
@@ -25,18 +26,25 @@ namespace kastaarModem::socket
         return socketId;
     }
 
-    esp_modem::command_result Socket::config(const uint16_t packetSize, const uint16_t exchangeTimeout, const uint16_t connectionTimeout, const uint16_t transmissionDelay)
-    {
-        #pragma region INPUT_CHECKING
-        if(packetSize > 1500) 
-        {
-            ESP_LOGD("Socket","packet size was to large: (%hu)", packetSize);
+    esp_modem::command_result Socket::enableRingSize(){
+        return KastaarModem::commandCommon(
+            "AT+SQNSCFGEXT=" + std::to_string(socketId) + ",1,0,0,0,0,0,0",500);
+    }
+
+    esp_modem::command_result Socket::config(const uint16_t packetSize,
+                                             const uint16_t exchangeTimeout,
+                                             const uint16_t connectionTimeout,
+                                             const uint16_t transmissionDelay) {
+#pragma region INPUT_CHECKING
+        if (packetSize > 1500) {
+            ESP_LOGD("Socket", "packet size was to large: (%hu)", packetSize);
             return esp_modem::command_result::FAIL;
         }
 
-        if((connectionTimeout < 10 || connectionTimeout > 1200) && connectionTimeout != 0)
-        {
-            ESP_LOGD("Socket", "exchange timout was out of bounds, expected 10-1200 or 0");
+        if ((connectionTimeout < 10 || connectionTimeout > 1200) &&
+            connectionTimeout != 0) {
+            ESP_LOGD("Socket",
+                    "exchange timout was out of bounds, expected 10-1200 or 0");
             return esp_modem::command_result::FAIL;
         }
         if (transmissionDelay > 255) {
@@ -79,6 +87,10 @@ namespace kastaarModem::socket
         }
 #pragma endregion
 
+        if (enableRingSize() != esp_modem::command_result::OK){
+            return esp_modem::command_result::FAIL;
+        }
+        
         return KastaarModem::commandCommon(
             "AT+SQNSD=" + std::to_string(socketId) + "," +
                 std::to_string(proto) + "," + std::to_string(port) + ",\"" +
@@ -130,6 +142,55 @@ namespace kastaarModem::socket
     {
         std::string payload(reinterpret_cast<const char*>(data), len);
         return sendMinimal(payload,ipAddr,port,RAI);
+    }
+
+    esp_modem::command_result Socket::receiveMinimal(std::span<uint8_t>& data, uint32_t & received)
+    {
+        return receiveMinimal(data,1500,received);
+    }
+
+    esp_modem::command_result Socket::receiveMinimal(uint8_t * data, size_t size, uint32_t & received)
+    {
+        return receiveMinimal(data,size,1500,received);
+    }
+
+    esp_modem::command_result Socket::receiveMinimal(std::span<uint8_t>& data, uint16_t maxBytes, uint32_t & received)
+    {
+        std::string command = "AT+SQNSRECV=" + std::to_string(socketId) + "," +
+                                std::to_string(maxBytes);
+        received = 0;
+
+        uint32_t expectedLength = 0;
+
+        auto callback = [&](uint8_t* raw, size_t len) -> esp_modem::command_result {
+            if (raw == nullptr || len == 0)
+                return esp_modem::command_result::TIMEOUT;
+
+            std::string_view line(reinterpret_cast<const char*>(raw), len);
+
+            if (line.starts_with("+SQNSRECV: ")) {
+                uint8_t id = 0;
+                uint16_t bytes = 0;
+                if (sscanf(std::string(line).c_str(), "+SQNSRECV: %hhu,%hu", &id, &bytes) == 2) {
+                    expectedLength = bytes;
+                    received = bytes;
+                }
+            }
+            else if (expectedLength > 0 && len == expectedLength) {
+                memcpy(data.data(), raw, std::min<size_t>(expectedLength, data.size()));
+            }
+
+            return esp_modem::command_result::OK;
+        };
+
+        return KastaarModem::commandCallback(command,callback,5000);
+    }
+    esp_modem::command_result Socket::receiveMinimal(uint8_t* data, size_t size, uint16_t maxBytes, uint32_t & received)
+    {
+        /* Don't worry about the error here, it is a false positive */
+        std::span<uint8_t> buffer {data,size};
+
+        return receiveMinimal(buffer,maxBytes,received);
     }
 }
 #endif

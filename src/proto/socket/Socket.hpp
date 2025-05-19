@@ -2,7 +2,10 @@
 #define _SOCKET_HPP_
 
 #include <cxx_include/esp_modem_types.hpp>
+#include <span>
+
 namespace kastaarModem::socket {
+    #pragma region ENUMS
     enum protocol {
         TCP,
         UDP,
@@ -19,7 +22,7 @@ namespace kastaarModem::socket {
         NO_MORE_TRANSMISSIONS = 1,
         SINGLE_DOWNLINK_ONLY = 2
     };
-
+    #pragma endregion
     /**
      * @brief this class represents a modem socket
      */
@@ -28,6 +31,7 @@ namespace kastaarModem::socket {
     Socket();
 
     ~Socket();
+    #pragma region PUBLIC_METHODS
     /**
      * @brief this function configures the socket
      */
@@ -72,22 +76,102 @@ namespace kastaarModem::socket {
     template<typename T>
     esp_modem::command_result sendMinimal(const T& object, const std::string& ipAddr = "",const uint16_t port = 0,const releaseAssistanceInformation RAI = NO_INFORMATION);
     #pragma endregion
+
+    #pragma region RECEIVE_MINIMAL
+    /**
+     * @brief This function attempts to receive 1500 bytes and write it to the data span.
+     * 
+     * @param [in] data the data span to write the data to.
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    esp_modem::command_result receiveMinimal(std::span<uint8_t>& data,uint32_t& received);
+
+    /**
+     * @brief This function attempts to receive 1500 bytes and write it to the
+     * data buffer.
+     *
+     * @param [in] data pointer to the data buffer to write to.
+     * @param [in] size size of the data buffer
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    esp_modem::command_result receiveMinimal(uint8_t* data, size_t size,uint32_t& received);
+
+    /**
+     * @brief This function attempts to receive maxBytes bytes and write it to the the data span
+     */
+    esp_modem::command_result receiveMinimal(std::span<uint8_t>& data,uint16_t maxBytes,uint32_t& received);
+
+    /**
+     * @brief This function attempts to receive a maximum of 1500 bytes and
+     * writes them to the array.
+     *
+     * @param [in] data The array to copy the data into.
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    template <std::size_t N>
+    esp_modem::command_result receiveMinimal(std::array<uint8_t, N>& data, uint32_t & received);
+
+    /**
+     * @brief This function attempts to receive a maximum of 1500 bytes and writes them to the data buffer
+     * 
+     * @param [in] data The pointer to the data buffer
+     */
+    esp_modem::command_result receiveMinimal(uint8_t *data, size_t size, uint16_t maxBytes,uint32_t &received);
+
+#pragma endregion
     /**
      * @brief this returns the Socket Id (1-5) (0 is not initalized)
      */
     constexpr uint8_t getSocketId();
 
+    /**
+     * @brief This function returns the amount of bytes available
+     */
+    constexpr uint64_t available() { return dataAvailable; };
+
+    /**
+     * @brief The urc handler for socket events
+     */
+    void setUrcHandler(std::function<void(std::string_view)> handler) {
+        urcCallback = handler;
+    }
+#pragma endregion
+    
+    private:
+        /** 
+         * @brief This function enables the data portion of the ring message
+         */
+        esp_modem::command_result enableRingSize();
     private:
         bool configured = false;
         bool connected = true;
         uint8_t socketId = 0;
+
+    protected:
+        friend class SocketManager;
+        std::function<void(std::string_view)> urcCallback;
+        uint64_t dataAvailable = 0;
     };
 
+    #pragma region TEMPLATED_FUNCTIONS
     template <typename T>
     inline esp_modem::command_result Socket::sendMinimal(const T &data, const std::string &ipAddr, const uint16_t port, const releaseAssistanceInformation RAI)
     {
+        static_assert(sizeof(T) <= 1500, "Maximum allowed array size is 1500 bytes");
+
         return sendMinimal((uint8_t*)&data,sizeof(T), ipAddr, port, RAI);
     }
+
+    template <std::size_t N>
+    inline esp_modem::command_result Socket::receiveMinimal(std::array<uint8_t, N> & data, uint32_t & received)
+    {
+        static_assert(N <= 1500, "Maximum allowed array size is 1500 bytes");
+
+        return receiveMinimal(data.data(),data.size(), 1500, received);
+    }
+    #pragma endregion
 } // namespace kastaarModem::socket
+
+using Socket = kastaarModem::socket::Socket;
 
 #endif
