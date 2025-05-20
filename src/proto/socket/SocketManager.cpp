@@ -6,15 +6,17 @@ namespace kastaarModem::socket
     void SocketManager::urcHandler(std::string_view line) 
     {
         std::string temp { line }; /* this will be cached */
-        uint8_t id = 0;
-        if(temp.starts_with("+SQNSRING: ")){
-            uint16_t payloadSize = 0;
-            if (sscanf(temp.c_str(), "+SQNSRING: %hhu,%hu", &id, &payloadSize) == 2) {
-                sockets[id - 1]->dataAvailable += payloadSize;
-            }
+
+        unsigned int id;
+        unsigned int bytes;
+
+        std::string line_str(line);
+        if (sscanf(line_str.c_str(), "+SQNSRING: %u,%u", &id, &bytes) == 2) {
+            sockets[id - 1]->dataAvailable += bytes;
         }
 
-        sockets[id - 1]->urcCallback(line);
+        if (sockets[id - 1]->urcCallback)
+            sockets[id - 1]->urcCallback(line);
     }
     constexpr uint8_t SocketManager::toIndex(uint8_t socketId) {
         return socketId - 1;

@@ -36,11 +36,13 @@ esp_modem::command_result KastaarModem::connect()
 {
     if(gm02sDce) {
         esp_modem::command_result res = getModule()->connect(pdpContext);
+        enableURCHandler(false);
+
         while (res == esp_modem::command_result::TIMEOUT)
         {
-            res = waitForConnection();
+          res = waitForConnection();
         }
-        
+        enableURCHandler(true);
     }
     return esp_modem::command_result::FAIL;
 }
@@ -60,7 +62,8 @@ esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len)
     char *mutableData = reinterpret_cast<char *>(data);
 
     std::string_view view(mutableData, len);
-
+    if(!view.ends_with("\r\n"))
+      return esp_modem::command_result::TIMEOUT;
     /* We iterate over the view until no more URC's have been found */
     while (!view.empty()) {
         /* Attempt to find the end of the urc*/
@@ -87,9 +90,10 @@ esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len)
 
 
         std::string_view line = view.substr(0, end);
-
         if(line.starts_with("+"))
-            urcHandler(line);
+        {
+          urcHandler(line);
+        }
         
         view.remove_prefix(end + 2); // Move past the line and \r\n
     }
@@ -135,7 +139,7 @@ bool KastaarModem::init(
     esp_modem::dte_config dteConfig = {
         .dte_buffer_size = 4096 / 2,
         .task_stack_size = 4096,
-        .task_priority = 15,
+        .task_priority = 5,
         .uart_config = {
             .port_num = config.uart_no,
             .data_bits = UART_DATA_8_BITS,
@@ -148,8 +152,8 @@ bool KastaarModem::init(
             .rx_io_num = config.pinRX,
             .rts_io_num = config.pinRTS,
             .cts_io_num = config.pinCTS,
-            .rx_buffer_size = 4096,
-            .tx_buffer_size = 4096,
+            .rx_buffer_size = 2048,
+            .tx_buffer_size = 2048,
             .event_queue_size = 30,
         }};
 
@@ -172,8 +176,6 @@ bool KastaarModem::init(
     if (!pppInterface)
       return false;
   }
-
-  uartDTE->set_urc_cb(callback);
 
   gm02sDce = esp_modem::create_SQNGM02S_dce(&dceConfig, uartDTE, pppInterface);
 
@@ -275,4 +277,9 @@ esp_modem::command_result KastaarModem::at(const std::string &command, uint32_t 
 esp_modem::command_result KastaarModem::commandCallback(const std::string& command, esp_modem::got_line_cb got_line, uint32_t time_ms)
 {
   return gm02sDce->command(command + "\r", got_line, time_ms);
+}
+
+void KastaarModem::enableURCHandler(bool enabled) 
+{
+  uartDTE->set_urc_cb(enabled ? callback : nullptr);
 }

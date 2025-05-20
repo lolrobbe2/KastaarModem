@@ -1,11 +1,12 @@
 #ifndef _SOCKET_MANAGER_HPP_
 #define _SOCKET_MANAGER_HPP_
 
-#include <KastaarModem.hpp>
-#include <esp_log.h>
-#include "SocketManager.hpp"
 #include "Socket.hpp"
-#include <string.h>
+#include "SocketManager.hpp"
+#include <KastaarModem.hpp>
+#include <cstring>
+#include <esp_log.h>
+#include <string>
 
 namespace kastaarModem::socket
 {
@@ -159,30 +160,66 @@ namespace kastaarModem::socket
         std::string command = "AT+SQNSRECV=" + std::to_string(socketId) + "," +
                                 std::to_string(maxBytes);
         received = 0;
-
+        bool receiving = false;
         uint32_t expectedLength = 0;
-
+        
         auto callback = [&](uint8_t* raw, size_t len) -> esp_modem::command_result {
             if (raw == nullptr || len == 0)
                 return esp_modem::command_result::TIMEOUT;
 
             std::string_view line(reinterpret_cast<const char*>(raw), len);
+            
+            if(line.starts_with("\r\n+CME ERROR") || line.starts_with("\r\nERROR"))
+                return esp_modem::command_result::FAIL;
 
-            if (line.starts_with("+SQNSRECV: ")) {
-                uint8_t id = 0;
-                uint16_t bytes = 0;
-                if (sscanf(std::string(line).c_str(), "+SQNSRECV: %hhu,%hu", &id, &bytes) == 2) {
-                    expectedLength = bytes;
+            /* TIMEOUT RETURNED DENOTES: no full payload*/
+            if (receiving == false && line.starts_with("\r\n+SQNSRECV: ")) {
+                unsigned int id;
+                unsigned int bytes;
+              // Note: line must be null-terminated for sscanf
+                size_t headerEnd = line.find("\r\n", 2); // Find end of header
+                std::string line_str(line.substr(2, headerEnd - 2));
+
+                if (sscanf(line_str.c_str(), "+SQNSRECV: %u,%u", &id,&bytes) == 2 ) {
+                    receiving = true;
                     received = bytes;
+                } else {
+                    receiving = false;
+                    return esp_modem::command_result::TIMEOUT;
+                }
+
+               
+                
+
+                if (headerEnd != std::string_view::npos) {
+                    size_t headerLength = headerEnd + 2; // include \r\n
+                    size_t totalLength = headerLength + received + 6; // +6 for "\r\nOK\r\n"
+        
+                    expectedLength = totalLength;
+                } else {
+                    receiving = false;
+                    return esp_modem::command_result::TIMEOUT;
                 }
             }
-            else if (expectedLength > 0 && len == expectedLength) {
-                memcpy(data.data(), raw, std::min<size_t>(expectedLength, data.size()));
-            }
 
-            return esp_modem::command_result::OK;
+            if(receiving && len >= expectedLength) {
+                size_t headerEnd = line.find("\r\n", 2); // Skip initial \r\n
+                size_t payloadOffset = headerEnd + 2; // Start of binary payload
+                size_t payloadLength = received;      // already parsed earlier from URC
+            
+                
+                std::memcpy(data.data(), raw + payloadOffset, payloadLength);
+                dataAvailable -= received;
+                receiving = false;
+                KastaarModem::enableURCHandler(true);
+                return esp_modem::command_result::OK;
+            } 
+
+
+            return esp_modem::command_result::TIMEOUT;
         };
 
+        KastaarModem::enableURCHandler(false);
         return KastaarModem::commandCallback(command,callback,5000);
     }
     esp_modem::command_result Socket::receiveMinimal(uint8_t* data, size_t size, uint16_t maxBytes, uint32_t & received)

@@ -44,6 +44,7 @@ extern "C" void app_main(void)
             uint32_t received;
             std::array<uint8_t,1500> dataBuffer;
             socket.receiveMinimal(dataBuffer,received);
+            ESP_LOGI("Socket", "Line: %.*s", static_cast<int>(received),dataBuffer.data());
         }
     }
 }

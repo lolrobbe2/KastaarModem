@@ -9,7 +9,7 @@
 
     #ifndef DEFAULT_CONFIG
         #define DEFAULT_CONFIG { \
-            .uart_no = (uart_port_t)1, \
+            .uart_no = UART_NUM_1, \
             .pinRX = 14, \
             .pinTX = 48, \
             .pinRTS = 21, \
@@ -104,7 +104,9 @@
         static esp_modem::command_result at(const std::string &command, uint32_t timeout_ms);
 
         static esp_modem::command_result commandCallback(const std::string &command, esp_modem::got_line_cb got_line, uint32_t time_ms);
-      private:
+        
+        static void enableURCHandler(bool enabled = true);
+    private:
         /**
          * @brief This is the internl PDP context that is used
          */
