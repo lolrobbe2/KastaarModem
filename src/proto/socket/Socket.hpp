@@ -76,8 +76,8 @@ namespace kastaarModem::socket {
     template<typename T>
     esp_modem::command_result sendMinimal(const T& object, const std::string& ipAddr = "",const uint16_t port = 0,const releaseAssistanceInformation RAI = NO_INFORMATION);
     #pragma endregion
-
-    #pragma region RECEIVE_MINIMAL
+#pragma region RECEIVE
+    #pragma region MINIMAL
     /**
      * @brief This function attempts to receive 1500 bytes and write it to the data span.
      * 
@@ -118,6 +118,28 @@ namespace kastaarModem::socket {
      */
     esp_modem::command_result receiveMinimal(uint8_t *data, size_t size, uint16_t maxBytes,uint32_t &received);
 
+#pragma endregion
+
+#pragma region FULL
+    /**
+     * @brief This function attempts to receive all the available bytes and write it to the data span.
+     * 
+     * @param [in] data the data span to write the data to.
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    esp_modem::command_result receive(std::span<uint8_t>& data,uint32_t& received);
+
+    /**
+     * @brief This function attempts to receive all the available bytes
+     * and write it to the data buffer.
+     *
+     * @param [in] data pointer to the data buffer to write to.
+     * @param [in] size size of the data buffer
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    esp_modem::command_result receive(uint8_t* data, size_t size,uint32_t& received);
+
+#pragma endregion
 #pragma endregion
     /**
      * @brief this returns the Socket Id (1-5) (0 is not initalized)

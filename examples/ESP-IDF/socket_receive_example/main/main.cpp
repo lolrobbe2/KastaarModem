@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <esp_log.h>
+#include "esp_timer.h" // Required for esp_timer_get_time
 #include <KastaarModem.hpp>
-#include <proto/socket/Socket.hpp>
+#include <esp_log.h>
 #include <esp_mac.h>
-
+#include <proto/socket/Socket.hpp>
+#include <stdio.h>
 
 KastaarModem modem;
 Socket socket;
@@ -39,11 +39,18 @@ extern "C" void app_main(void)
         }
       
         vTaskDelay(pdMS_TO_TICKS(5000)); /* delay to avoid spamming the server */
+        std::array<uint8_t, 3000> dataBuffer;
+
         while (socket.available())
         {
             uint32_t received;
-            std::array<uint8_t,1500> dataBuffer;
-            socket.receiveMinimal(dataBuffer,received);
+            int64_t startTime = esp_timer_get_time(); // Time before receive
+
+            socket.receive(dataBuffer,3000,received);
+            int64_t endTime = esp_timer_get_time(); // Time after receive
+            int64_t durationMs = (endTime - startTime) / 1000;
+
+            ESP_LOGI("Socket", "Received %" PRId32" bytes in %" PRId64 " ms", received, durationMs);
             ESP_LOGI("Socket", "Line: %.*s", static_cast<int>(received),dataBuffer.data());
         }
     }

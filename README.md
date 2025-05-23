@@ -2,7 +2,6 @@
 
 This library is meant as an alternative to WalterModem wich uses ESP-MODEM internally.
 
-
 there is a change required for the modem component in esp_modem_dte.cpp:
 see [here](https://github.com/espressif/esp-protocols/pull/810) for more info.
 
