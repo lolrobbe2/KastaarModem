@@ -58,7 +58,6 @@ esp_modem::command_result KastaarModem::waitForConnection()
 
 esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len) {
   char *mutableData = reinterpret_cast<char *>(data);
-  uint32_t bytesRead = 0;
   std::string_view view(mutableData, len);
   ESP_LOGI("Socket", "View content: %.*s", view.size(), view.data());
   if (!view.ends_with("\r\n"))
