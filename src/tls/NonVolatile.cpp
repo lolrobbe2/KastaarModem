@@ -10,9 +10,12 @@ namespace kastaarModem::tls
         }
         
         std::string command = "AT+SQNSNVW=" + getDataTypeString(type) + "," + std::to_string(slotIdx) + "," + std::to_string(size) + "\r\n";
-        command.append(reinterpret_cast<const char *>(data), size);
 
-        return KastaarModem::command(command, {"OK"}, {"ERROR"}, 5000);
+        KastaarModem::command(command, {"OK"}, {"ERROR"}, 5000);
+
+        std::string terminator = "";
+        std::string payload(reinterpret_cast<const char *>(data), size);
+        return KastaarModem::commandPayload(payload, terminator, 20000);
     }
     std::string NonVolatileMemory::getDataTypeString(const DataType type)
     {
