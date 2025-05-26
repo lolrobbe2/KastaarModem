@@ -229,6 +229,7 @@ namespace kastaarModem::socket {
     };
 
     #pragma region TEMPLATED_FUNCTIONS
+#if KASTAAR_ENABLE_SEND_MINIMAL
     template <typename T>
     inline esp_modem::command_result Socket::sendMinimal(const T &data, const std::string &ipAddr, const uint16_t port, const releaseAssistanceInformation RAI)
     {
@@ -236,7 +237,9 @@ namespace kastaarModem::socket {
 
         return sendMinimal((uint8_t*)&data,sizeof(T), ipAddr, port, RAI);
     }
+#endif
 
+#if CONFIG_KASTAAR_ENABLE_RECEIVE_MINIMAL
     template <std::size_t N>
     inline esp_modem::command_result Socket::receiveMinimal(std::array<uint8_t, N> & data, uint32_t & received)
     {
@@ -244,7 +247,9 @@ namespace kastaarModem::socket {
 
         return receiveMinimal(data.data(),data.size(), 1500, received);
     }
+#endif
 
+#if CONFIG_KASTAAR_ENABLE_RECEIVE_FULL
     template <std::size_t N>
     inline esp_modem::command_result Socket::receive(std::array<uint8_t, N> &data, uint32_t &received)
     {
@@ -254,8 +259,9 @@ namespace kastaarModem::socket {
     template <std::size_t N>
     inline esp_modem::command_result
     Socket::receive(std::array<uint8_t, N> &data, uint32_t maxBytes, uint32_t &received) {
-      return receive(data.data(), data.size(), received);
+        return receive(data.data(), data.size(), received);
     }
+#endif
 #pragma endregion
 } // namespace kastaarModem::socket
 
