@@ -1,30 +1,32 @@
-config KASTAAR_ENABLE_SOCKETS
-    bool "Enable Socket functionality"
-    default y
-    help
-        Enable socket functions for the Kastaar Modem.
+menu "Kastaar Modem"
+    config KASTAAR_ENABLE_SOCKETS
+        bool "Enable Socket functionality"
+        default y
+        help
+            Enable socket functions for the Kastaar Modem.
 
-if KASTAAR_ENABLE_SOCKETS
-    menu "Sockets"
-        comment "the minimal functions can only send/ receive 1500 bytes at a time!"
+    if KASTAAR_ENABLE_SOCKETS
+        menu "Sockets"
+            comment "the minimal functions can only send/ receive 1500 bytes at a time!"
 
-        config KASTAAR_ENABLE_SEND_MINIMAL
-            bool "enable minimal send (1500 bytes)"
-            default y
-            help
-                enable Socket send functions in the interface
-        
-        config KASTAAR_ENABLE_RECEIVE_MINIMAL
-            bool "enable minimal send (1500 bytes)"
-            default y
-            help
-                enable the minimal receive functions in the interface
-        
-        config KASTAAR_ENABLE_RECEIVE_FULL
-            bool "enable full receive (receive > 1500 bytes)"
-            default y
-            depends on KASTAAR_ENABLE_RECEIVE_MINIMAL
-            help
-                enable the full receive functions in the interface to receive larger payloads then 1500 bytes.
-    endmenu
-endif
+            config KASTAAR_ENABLE_SEND_MINIMAL
+                bool "enable minimal send (1500 bytes)"
+                default y
+                help
+                    enable Socket send functions in the interface
+            
+            config KASTAAR_ENABLE_RECEIVE_MINIMAL
+                bool "enable minimal send (1500 bytes)"
+                default y
+                help
+                    enable the minimal receive functions in the interface
+            
+            config KASTAAR_ENABLE_RECEIVE_FULL
+                bool "enable full receive (receive > 1500 bytes)"
+                default y
+                depends on KASTAAR_ENABLE_RECEIVE_MINIMAL
+                help
+                    enable the full receive functions in the interface to receive larger payloads then 1500 bytes.
+        endmenu
+    endif
+endmenu
