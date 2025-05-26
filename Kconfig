@@ -36,10 +36,16 @@ menu "Kastaar Modem"
         endmenu
     endif
 
+    config KASTAAR_ENABLE_NVM
+        bool "Enable NVM funtionality (Non Volatile Memory)"
+        default y
+
     config KASTAAR_ENABLE_TLS
         bool "Enable SSL/TLS functionality"
         default y
         help
             Enable the SSL/TLS interface.
+            
+        depends on KASTAAR_ENABLE_NVM
 endmenu
 
