@@ -1,3 +1,5 @@
+#include <sdkconfig.h>
+
 #include "cxx17_include/esp_modem_command_library_17.hpp"
 #include <KastaarModem.hpp>
 #include <cxx_include/esp_modem_api.hpp>

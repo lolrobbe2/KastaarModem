@@ -1,3 +1,4 @@
+#include <sdkconfig.h>
 #if CONFIG_KASTAAR_ENABLE_SOCKETS
 #include "Socket.hpp"
 #include "SocketManager.hpp"

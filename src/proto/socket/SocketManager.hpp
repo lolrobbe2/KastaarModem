@@ -1,3 +1,4 @@
+#include <sdkconfig.h>
 #if CONFIG_KASTAAR_ENABLE_SOCKETS
 #ifndef _SOCKET_MANAGER_HPP_
 #define _SOCKET_MANAGER_HPP_
