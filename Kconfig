@@ -35,5 +35,11 @@ menu "Kastaar Modem"
                     enable the full receive functions in the interface to receive larger payloads then 1500 bytes.
         endmenu
     endif
+
+    config KASTAAR_ENABLE_TLS
+        bool "Enable SSL/TLS functionality"
+        default y
+        help
+            Enable the SSL/TLS interface.
 endmenu
 
