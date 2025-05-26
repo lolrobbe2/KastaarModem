@@ -1,12 +1,10 @@
-config KASTAAR_ENABLE
-    bool "DO NOT TOUCH!!!"
-    default y
-    select PPP_SUPPORT
-    select ESP_MODEM_URC_HANDLER
-    
-if KASTAAR_ENABLE
+
     
 menu "Kastaar Modem"
+    if !PPP_SUPPORT || !ESP_MODEM_URC_HANDLER
+        comment " WARNING: PPP_SUPPORT and ESP_MODEM_URC_HANDLER must be enabled for KastaarModem to function."
+    endif
+
     config KASTAAR_ENABLE_SOCKETS
         bool "Enable Socket functionality"
         default y
@@ -39,4 +37,3 @@ menu "Kastaar Modem"
     endif
 endmenu
 
-endif
