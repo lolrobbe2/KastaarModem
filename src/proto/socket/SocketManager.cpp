@@ -1,3 +1,4 @@
+#if CONFIG_KASTAAR_ENABLE_SOCKETS
 #include "SocketManager.hpp"
 #include <esp_log.h>
 #include <charconv>
@@ -42,3 +43,4 @@ namespace kastaarModem::socket
         }
     }
 }
+#endif

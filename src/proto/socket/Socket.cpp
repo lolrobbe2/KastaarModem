@@ -1,6 +1,4 @@
-#ifndef _SOCKET_MANAGER_HPP_
-#define _SOCKET_MANAGER_HPP_
-
+#if CONFIG_KASTAAR_ENABLE_SOCKETS
 #include "Socket.hpp"
 #include "SocketManager.hpp"
 #include <KastaarModem.hpp>
@@ -139,6 +137,9 @@ namespace kastaarModem::socket
         KastaarModem::commandCallback(command, callback, 5000);
         return info;
     }
+
+    #pragma region SEND_MINIMAL
+#if CONFIG_KASTAAR_ENABLE_SEND_MINIMAL
     esp_modem::command_result Socket::sendMinimal(const std::string &payload, const std::string &ipAddr, const uint16_t port, const releaseAssistanceInformation RAI)
     {
         if(payload.size() > 1500){
@@ -185,7 +186,11 @@ namespace kastaarModem::socket
         std::string payload(reinterpret_cast<const char*>(data), len);
         return sendMinimal(payload,ipAddr,port,RAI);
     }
-
+#endif
+#pragma endregion
+#pragma region RECEIVE
+#pragma region MINIMAL
+#if CONFIG_KASTAAR_ENABLE_RECEIVE_MINIMAL
     esp_modem::command_result Socket::receiveMinimal(std::span<uint8_t>& data, uint32_t & received)
     {
         return receiveMinimal(data,1500,received);
@@ -283,7 +288,8 @@ namespace kastaarModem::socket
 
         return receiveMinimal(buffer,maxBytes,received);
     }
-
+#endif
+#pragma endregion
     esp_modem::command_result Socket::receive(std::span<uint8_t> &data, uint32_t &received)
     {
         return receive(data,data.size(),received);
@@ -325,6 +331,6 @@ namespace kastaarModem::socket
 
         return esp_modem::command_result::OK;
     }
-
+#pragma endregion
 }
 #endif

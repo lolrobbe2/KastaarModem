@@ -1,3 +1,4 @@
+#if CONFIG_KASTAAR_ENABLE_SOCKETS
 #ifndef _SOCKET_HPP_
 #define _SOCKET_HPP_
 
@@ -58,6 +59,7 @@ namespace kastaarModem::socket {
     SocketInfo getInfo();
     
     #pragma region SEND_MINIMAL
+#if KASTAAR_ENABLE_SEND_MINIMAL
     /**
      * @brief This function will send a minimal amount of bytes over the socket (max 1500)
      * 
@@ -85,9 +87,11 @@ namespace kastaarModem::socket {
      */
     template<typename T>
     esp_modem::command_result sendMinimal(const T& object, const std::string& ipAddr = "",const uint16_t port = 0,const releaseAssistanceInformation RAI = NO_INFORMATION);
+    #endif
     #pragma endregion
 #pragma region RECEIVE
     #pragma region MINIMAL
+#if CONFIG_KASTAAR_ENABLE_RECEIVE_MINIMAL
     /**
      * @brief This function attempts to receive 1500 bytes and write it to the data span.
      * 
@@ -127,9 +131,11 @@ namespace kastaarModem::socket {
      * @param [in] data The pointer to the data buffer
      */
     esp_modem::command_result receiveMinimal(uint8_t *data, size_t size, uint16_t maxBytes,uint32_t &received);
+    #endif
 #pragma endregion
 
 #pragma region FULL
+#if CONFIG_KASTAAR_ENABLE_RECEIVE_FULL
     /**
      * @brief This function attempts to receive all the available bytes and write it to the data span.
      * 
@@ -185,6 +191,7 @@ namespace kastaarModem::socket {
      */
     template <std::size_t N>
     esp_modem::command_result receive(std::array<uint8_t, N> &data, uint32_t maxBytes, uint32_t &received);
+    #endif
 #pragma endregion
 #pragma endregion
     /**
@@ -253,4 +260,5 @@ namespace kastaarModem::socket {
 
 using Socket = kastaarModem::socket::Socket;
 
+#endif
 #endif
