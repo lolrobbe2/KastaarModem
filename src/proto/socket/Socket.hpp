@@ -60,7 +60,7 @@ namespace kastaarModem::socket {
     SocketInfo getInfo();
     
     #pragma region SEND_MINIMAL
-#if KASTAAR_ENABLE_SEND_MINIMAL
+#if CONFIG_KASTAAR_ENABLE_SEND_MINIMAL
     /**
      * @brief This function will send a minimal amount of bytes over the socket (max 1500)
      * 
