@@ -1,3 +1,5 @@
+select PPP_SUPPORT
+select ESP_MODEM_URC_HANDLER
 menu "Kastaar Modem"
     config KASTAAR_ENABLE_SOCKETS
         bool "Enable Socket functionality"
