@@ -1,5 +1,11 @@
-select PPP_SUPPORT
-select ESP_MODEM_URC_HANDLER
+config KASTAAR_ENABLE
+    bool "DO NOT TOUCH!!!"
+    default y
+    select PPP_SUPPORT
+    select ESP_MODEM_URC_HANDLER
+    
+if KASTAAR_ENABLE
+    
 menu "Kastaar Modem"
     config KASTAAR_ENABLE_SOCKETS
         bool "Enable Socket functionality"
@@ -32,3 +38,5 @@ menu "Kastaar Modem"
         endmenu
     endif
 endmenu
+
+endif
