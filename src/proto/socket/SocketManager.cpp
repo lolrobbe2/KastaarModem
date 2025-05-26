@@ -11,12 +11,7 @@ namespace kastaarModem::socket
         unsigned int bytes;
 
         std::string line_str(line);
-        if (sscanf(line_str.c_str(), "+SQNSRING: %u,%u", &id, &bytes) == 2) {
-            sockets[id - 1]->dataAvailable += bytes;
-        }
 
-        if (sockets[id - 1]->urcCallback)
-            sockets[id - 1]->urcCallback(line);
     }
     constexpr uint8_t SocketManager::toIndex(uint8_t socketId) {
         return socketId - 1;

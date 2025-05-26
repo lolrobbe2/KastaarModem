@@ -1,0 +1,30 @@
+mainmenu "Kastaar modem"
+
+config KASTAAR_ENABLE_SOCKETS
+    bool "Enable Socket functionality"
+    default y
+    help
+        Enable socket functions for the Kastaar Modem.
+
+    if KASTAAR_ENABLE_SOCKETS
+        menu "Sockets"
+            comment "the minimal functions can only send/ receive 1500 bytes at a time!"
+
+            config KASTAAR_ENABLE_SEND_MINIMAL
+                default y
+                help
+                    enable Socket send functions in the interface
+            
+            config KASTAAR_ENABLE_RECEIVE_MINIMAL
+                default y
+                help
+                    enable the minimal receive functions in the interface
+            
+            config KASTAAR_ENABLE_RECEIVE_FULL
+                default y
+                depends on KASTAAR_ENABLE_RECEIVE_MINIMAL
+                help
+                    enable the full receive functions in the interface to receive larger payloads then 1500 bytes.
+        endmenu
+    endif
+end

@@ -36,13 +36,11 @@ esp_modem::command_result KastaarModem::connect()
 {
     if(gm02sDce) {
         esp_modem::command_result res = getModule()->connect(pdpContext);
-        enableURCHandler(false);
-
+        enableURCHandler(true);
         while (res == esp_modem::command_result::TIMEOUT)
         {
           res = waitForConnection();
         }
-        enableURCHandler(true);
     }
     return esp_modem::command_result::FAIL;
 }
@@ -56,48 +54,41 @@ esp_modem::command_result KastaarModem::waitForConnection()
     return KastaarModem::command("AT+CEREG?", pass, fail, 1200000);
 }
 
-esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len) 
-{
-    
-    char *mutableData = reinterpret_cast<char *>(data);
+esp_modem::command_result KastaarModem::urcCallback(uint8_t *data, size_t len) {
+  char *mutableData = reinterpret_cast<char *>(data);
+  uint32_t bytesRead = 0;
+  std::string_view view(mutableData, len);
+  ESP_LOGI("Socket", "View content: %.*s", view.size(), view.data());
+  if (!view.ends_with("\r\n"))
+    return esp_modem::command_result::FAIL;
+  /* We iterate over the view until no more URC's have been found */
+  while (!view.empty()) {
 
-    std::string_view view(mutableData, len);
-    if(!view.ends_with("\r\n"))
-      return esp_modem::command_result::TIMEOUT;
-    /* We iterate over the view until no more URC's have been found */
-    while (!view.empty()) {
-        /* Attempt to find the end of the urc*/
-        size_t start = view.find("\r\n");
+    /* Attempt to find the end of the urc*/
+    size_t start = view.find("\r\n");
 
-        if (start == std::string_view::npos) {
-            break;
-        }
-
-        // Remove everything before and including first \r\n
-        view.remove_prefix(start + 2);
-
-        // Step 2: Look for the next \r\n (end of URC)
-        size_t end = view.find("\r\n");
-        if (end == std::string_view::npos) {
-            break;
-        }
-
-        /*
-            Modify the original buffer in-place by replacing \r\n with \0.
-            This is so we can use C-style strings from the data function in
-        string-view
-        */
-
-
-        std::string_view line = view.substr(0, end);
-        if(line.starts_with("+"))
-        {
-          urcHandler(line);
-        }
-        
-        view.remove_prefix(end + 2); // Move past the line and \r\n
+    if (start == std::string_view::npos) {
+      break;
     }
-    return esp_modem::command_result::OK;
+
+    // Remove everything before and including first \r\n
+    view.remove_prefix(start + 2);
+
+    // Step 2: Look for the next \r\n (end of URC)
+    size_t end = view.find("\r\n");
+
+    if (end == std::string_view::npos) {
+      return esp_modem::command_result::FAIL;
+    }
+
+    std::string_view line = view.substr(0, end);
+    if (line.starts_with("+")) {
+      urcHandler(line);
+    }
+
+    view.remove_prefix(end + 2); // Move past the line and \r\n
+  }
+  return esp_modem::command_result::OK;
 }
 
 bool KastaarModem::init(

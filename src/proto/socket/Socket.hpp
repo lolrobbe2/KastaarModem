@@ -23,6 +23,14 @@ namespace kastaarModem::socket {
         SINGLE_DOWNLINK_ONLY = 2
     };
     #pragma endregion
+    
+    struct SocketInfo
+    {
+        uint32_t socketId = 0;
+        uint32_t sent = 0;
+        uint32_t received = 0;
+        uint32_t available = 0;
+    };
     /**
      * @brief this class represents a modem socket
      */
@@ -47,6 +55,8 @@ namespace kastaarModem::socket {
         const acceptRemote accept = acceptRemote::DISABLED
     );
 
+    SocketInfo getInfo();
+    
     #pragma region SEND_MINIMAL
     /**
      * @brief This function will send a minimal amount of bytes over the socket (max 1500)
@@ -117,7 +127,6 @@ namespace kastaarModem::socket {
      * @param [in] data The pointer to the data buffer
      */
     esp_modem::command_result receiveMinimal(uint8_t *data, size_t size, uint16_t maxBytes,uint32_t &received);
-
 #pragma endregion
 
 #pragma region FULL
@@ -129,6 +138,14 @@ namespace kastaarModem::socket {
      */
     esp_modem::command_result receive(std::span<uint8_t>& data,uint32_t& received);
 
+       /**
+     * @brief This function attempts to receive all the available bytes and write it to the data span.
+     * 
+     * @param [in] data the data span to write the data to.
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    esp_modem::command_result receive(std::span<uint8_t>& data, uint32_t maxBytes, uint32_t& received);
+
     /**
      * @brief This function attempts to receive all the available bytes
      * and write it to the data buffer.
@@ -139,6 +156,35 @@ namespace kastaarModem::socket {
      */
     esp_modem::command_result receive(uint8_t* data, size_t size,uint32_t& received);
 
+    /**
+     * @brief This function attempts to receive all the available bytes
+     * and write it to the data buffer.
+     *
+     * @param [in] data pointer to the data buffer to write to.
+     * @param [in] size size of the data buffer
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    esp_modem::command_result receive(uint8_t* data, size_t size, uint32_t maxBytes,uint32_t& received);
+
+    /**
+     * @brief This function attempts to receive a maximum of 1500 bytes and
+     * writes them to the array.
+     *
+     * @param [in] data The array to copy the data into.
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    template <std::size_t N>
+    esp_modem::command_result receive(std::array<uint8_t, N> &data, uint32_t &received);
+
+    /**
+     * @brief This function attempts to receive a maximum of 1500 bytes and
+     * writes them to the array.
+     *
+     * @param [in] data The array to copy the data into.
+     * @param [out] received the amount of data that was acctualy received.
+     */
+    template <std::size_t N>
+    esp_modem::command_result receive(std::array<uint8_t, N> &data, uint32_t maxBytes, uint32_t &received);
 #pragma endregion
 #pragma endregion
     /**
@@ -149,7 +195,7 @@ namespace kastaarModem::socket {
     /**
      * @brief This function returns the amount of bytes available
      */
-    constexpr uint64_t available() { return dataAvailable; };
+    uint32_t available();
 
     /**
      * @brief The urc handler for socket events
@@ -172,7 +218,6 @@ namespace kastaarModem::socket {
     protected:
         friend class SocketManager;
         std::function<void(std::string_view)> urcCallback;
-        uint64_t dataAvailable = 0;
     };
 
     #pragma region TEMPLATED_FUNCTIONS
@@ -191,7 +236,19 @@ namespace kastaarModem::socket {
 
         return receiveMinimal(data.data(),data.size(), 1500, received);
     }
-    #pragma endregion
+
+    template <std::size_t N>
+    inline esp_modem::command_result Socket::receive(std::array<uint8_t, N> &data, uint32_t &received)
+    {
+        return receive(data.data(), data.size(), received);
+    }
+
+    template <std::size_t N>
+    inline esp_modem::command_result
+    Socket::receive(std::array<uint8_t, N> &data, uint32_t maxBytes, uint32_t &received) {
+      return receive(data.data(), data.size(), received);
+    }
+#pragma endregion
 } // namespace kastaarModem::socket
 
 using Socket = kastaarModem::socket::Socket;

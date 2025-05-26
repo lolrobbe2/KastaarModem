@@ -27,6 +27,11 @@ namespace kastaarModem::socket
         return socketId;
     }
 
+    uint32_t Socket::available()
+    {
+       return getInfo().available;
+    }
+
     esp_modem::command_result Socket::enableRingSize(){
         return KastaarModem::commandCommon(
             "AT+SQNSCFGEXT=" + std::to_string(socketId) + ",1,0,0,0,0,0,0",500);
@@ -98,7 +103,43 @@ namespace kastaarModem::socket
                 addr + "\",,,1,,0",
             5000);
     }
-    esp_modem::command_result Socket::sendMinimal(const std::string& payload, const std::string &ipAddr, const uint16_t port, const releaseAssistanceInformation RAI)
+    SocketInfo Socket::getInfo()
+    {
+        std::string command = "AT+SQNSI=" + std::to_string(socketId) + ",0" ;
+        SocketInfo info;
+        auto callback = [&](uint8_t* raw, size_t len) -> esp_modem::command_result {
+            if (raw == nullptr || len == 0)
+                return esp_modem::command_result::TIMEOUT;
+
+            std::string_view line(reinterpret_cast<const char*>(raw), len);
+
+            size_t pos = line.find("+SQNSI: ");
+            if (pos != std::string_view::npos) {
+                // Extract the rest of the line from "+SQNSI: " to end or next \r\n
+                size_t end = line.find("\r\n", pos);
+                std::string line_str;
+                if (end != std::string_view::npos) {
+                    line_str = std::string(line.substr(pos, end - pos));
+                } else {
+                    line_str = std::string(line.substr(pos)); // fallback if no \r\n
+                }
+                ESP_LOGI("Socket","%s",line_str.c_str());
+                sscanf(line_str.c_str(),
+                       "+SQNSI: %" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32,
+                       &info.socketId, &info.sent, &info.received,
+                       &info.available);
+
+               ESP_LOGI("Socket", "socketId: %" PRIu32 ", sent: %" PRIu32 ", received: %" PRIu32 ", available: %" PRIu32,
+         info.socketId, info.sent, info.received, info.available);
+
+            }
+            return esp_modem::command_result::OK;
+        };
+
+        KastaarModem::commandCallback(command, callback, 5000);
+        return info;
+    }
+    esp_modem::command_result Socket::sendMinimal(const std::string &payload, const std::string &ipAddr, const uint16_t port, const releaseAssistanceInformation RAI)
     {
         if(payload.size() > 1500){
             ESP_LOGD("Socket","payload was to large");
@@ -157,12 +198,18 @@ namespace kastaarModem::socket
 
     esp_modem::command_result Socket::receiveMinimal(std::span<uint8_t>& data, uint16_t maxBytes, uint32_t & received)
     {
+        ESP_LOGD("Socket", "Max bytes allowed to receive: %u", static_cast<unsigned int>(maxBytes));
+
         std::string command = "AT+SQNSRECV=" + std::to_string(socketId) + "," +
                                 std::to_string(maxBytes);
         received = 0;
         bool receiving = false;
         uint32_t expectedLength = 0;
-        
+        ESP_LOGI("Socket", "Available: %" PRIu32, available());
+
+        size_t headerStart = 0;
+        size_t headerEnd = 0;
+        size_t payloadOffset = 0; // Start of binary payload
         auto callback = [&](uint8_t* raw, size_t len) -> esp_modem::command_result {
             if (raw == nullptr || len == 0)
                 return esp_modem::command_result::TIMEOUT;
@@ -172,46 +219,53 @@ namespace kastaarModem::socket
             if(line.starts_with("\r\n+CME ERROR") || line.starts_with("\r\nERROR"))
                 return esp_modem::command_result::FAIL;
 
+            ESP_LOGI("Socket", "line mc line face: %.*s", line.length(), line.data());
+            headerStart = line.find("+SQNSRECV:");
             /* TIMEOUT RETURNED DENOTES: no full payload*/
-            if (receiving == false && line.starts_with("\r\n+SQNSRECV: ")) {
+            if (receiving == false && headerStart != std::string_view::npos) {
                 unsigned int id;
                 unsigned int bytes;
               // Note: line must be null-terminated for sscanf
-                size_t headerEnd = line.find("\r\n", 2); // Find end of header
-                std::string line_str(line.substr(2, headerEnd - 2));
+                
+                
+                headerEnd = line.find("\r\n", headerStart); // Find end of header
+                headerStart--;
+                ESP_LOGI("Socket", "headerStart: %" PRIu32 ", headerEnd: %" PRIu32,
+                    static_cast<uint32_t>(headerStart),
+                    static_cast<uint32_t>(headerEnd));
+                payloadOffset = headerEnd + headerStart;
+                std::string line_str(line.substr(headerStart, headerEnd + 2));
+                ESP_LOGI("Socket", "line_str: %s", line_str.c_str());
 
-                if (sscanf(line_str.c_str(), "+SQNSRECV: %u,%u", &id,&bytes) == 2 ) {
+                if (sscanf(line_str.c_str(), "\r\n+SQNSRECV: %u,%u", &id,&bytes) == 2 ) {
                     receiving = true;
                     received = bytes;
+                    ESP_LOGI("Socket", "receiving: %u", bytes);
                 } else {
                     receiving = false;
                     return esp_modem::command_result::TIMEOUT;
                 }
 
-               
-                
-
                 if (headerEnd != std::string_view::npos) {
                     size_t headerLength = headerEnd + 2; // include \r\n
-                    size_t totalLength = headerLength + received + 6; // +6 for "\r\nOK\r\n"
-        
+                    size_t totalLength = headerLength + received + 8; // +6 for "\r\nOK\r\n"
+                    ESP_LOGI("Soket","Hello");
                     expectedLength = totalLength;
                 } else {
                     receiving = false;
                     return esp_modem::command_result::TIMEOUT;
                 }
             }
+            ESP_LOGI("Socket",
+                     "len (%" PRIu32 ") >= expectedLength (%" PRIu32 "): %s",
+                     (uint32_t)len, (uint32_t)expectedLength,
+                     (len >= expectedLength) ? "true" : "false");
 
             if(receiving && len >= expectedLength) {
-                size_t headerEnd = line.find("\r\n", 2); // Skip initial \r\n
-                size_t payloadOffset = headerEnd + 2; // Start of binary payload
-                size_t payloadLength = received;      // already parsed earlier from URC
-            
-                
-                std::memcpy(data.data(), raw + payloadOffset, payloadLength);
-                dataAvailable -= received;
+                std::memcpy(data.data(), raw + payloadOffset, received);
                 receiving = false;
-                KastaarModem::enableURCHandler(true);
+                ESP_LOGI("Socket", "finished receiving");
+                //KastaarModem::enableURCHandler(true);
                 return esp_modem::command_result::OK;
             } 
 
@@ -219,7 +273,7 @@ namespace kastaarModem::socket
             return esp_modem::command_result::TIMEOUT;
         };
 
-        KastaarModem::enableURCHandler(false);
+        //KastaarModem::enableURCHandler(false);
         return KastaarModem::commandCallback(command,callback,5000);
     }
     esp_modem::command_result Socket::receiveMinimal(uint8_t* data, size_t size, uint16_t maxBytes, uint32_t & received)
@@ -229,5 +283,48 @@ namespace kastaarModem::socket
 
         return receiveMinimal(buffer,maxBytes,received);
     }
+
+    esp_modem::command_result Socket::receive(std::span<uint8_t> &data, uint32_t &received)
+    {
+        return receive(data,data.size(),received);
+    }
+
+    esp_modem::command_result Socket::receive(std::span<uint8_t> &data, uint32_t maxBytes, uint32_t &received)
+    {
+        return receive(data.data(),data.size(), maxBytes,received);
+    }
+
+    esp_modem::command_result Socket::receive(uint8_t *data, size_t size, uint32_t &received)
+    {
+        return receive(data,size,size,received);
+    }
+
+    esp_modem::command_result Socket::receive(uint8_t *data, size_t size, uint32_t maxBytes, uint32_t &received)
+    {
+        size_t bufferOffset = 0;
+        uint32_t tempReceived = 0;
+        received = 0;
+        ESP_LOGI("Socket", "Available: %" PRIu32, available());
+
+        if (available() > size && maxBytes > size) {
+            ESP_LOGD("Socket", "Buffer was too small");
+            return esp_modem::command_result::FAIL;
+        }
+
+        while (available() && received < maxBytes) {
+            uint32_t remaining = static_cast<uint16_t>(maxBytes - received);
+            uint32_t chunkSize = (remaining < 1500) ? remaining : 1500;
+
+            esp_modem::command_result res = receiveMinimal(data + bufferOffset, size - bufferOffset, chunkSize, tempReceived);
+            if (res != esp_modem::command_result::OK)
+                return res;
+
+            received += tempReceived;
+            bufferOffset += tempReceived;
+        }
+
+        return esp_modem::command_result::OK;
+    }
+
 }
 #endif
