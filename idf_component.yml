@@ -1,0 +1,19 @@
+# component.yml
+name: KastaarModem
+version: "0.0.1"
+description: IOT modem library
+url: https://github.com/lolrobbe2/KastaarModem
+issues: https://github.com/lolrobbe2/KastaarModem/issues
+discussion: https://github.com/lolrobbe2/KastaarModem/discussions
+dependencies:
+  idf: ">=5.0"
+  esp_modem:
+    git: "https://github.com/lolrobbe2/esp_modem_temp"
+    version: "*"
+targets:
+  - esp32s3
+
+files:
+    exclude:
+      - "examples/**/*"      # Exclude examples folder
+      - "docs/**/*"          # Exclude docs folder
