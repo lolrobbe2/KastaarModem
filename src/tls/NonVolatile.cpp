@@ -9,7 +9,7 @@ namespace kastaarModem::tls
             return esp_modem::command_result::FAIL;
         }
         
-        std::string command = "AT+SQNSNVW=" + getDataTypeString(type) + "," + std::to_string(slotIdx) + "," + std::to_string(size) + "\r\n";
+        std::string command = "AT+SQNSNVW=\"" + getDataTypeString(type) + "\"," + std::to_string(slotIdx) + "," + std::to_string(size) + "\r\n";
 
         KastaarModem::command(command, {"OK"}, {"ERROR"}, 5000);
 
@@ -17,6 +17,12 @@ namespace kastaarModem::tls
         std::string payload(reinterpret_cast<const char *>(data), size);
         return KastaarModem::commandPayload(payload, terminator, 20000);
     }
+
+    esp_modem::command_result NonVolatileMemory::write(const std::string_view data, const uint8_t slotIdx, const DataType type)
+    {
+        return write((const uint8_t)data.data(),data.size(),slotIdx,type);
+    }
+
     std::string NonVolatileMemory::getDataTypeString(const DataType type)
     {
         switch (type)

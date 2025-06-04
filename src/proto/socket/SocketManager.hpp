@@ -28,7 +28,7 @@ namespace kastaarModem::socket
         static uint8_t getFreeSocket(Socket* socket);
         static void freeSocket(uint8_t socketId);
     private:
-        static inline Socket* sockets[5] = { nullptr };
+            static inline Socket* sockets[5] = { nullptr };
     };
     
    

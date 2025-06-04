@@ -1,0 +1,36 @@
+dependencies:
+  esp_modem:
+    component_hash: b7b90576466dd7bf2e8c44960e2c1b9d01844abf5e9ab0773d561a4931f24f50
+    dependencies:
+    - name: idf
+      version: '>=4.1'
+    source:
+      git: https://github.com/lolrobbe2/esp_modem_temp
+      path: .
+      type: git
+    version: 0f85b248ed084bb12f2406ac4f32dd4132ceb2bd
+  idf:
+    source:
+      type: idf
+    version: 5.4.0
+  lolrobbe2/kastaar-modem:
+    component_hash: 67db3768fd11f2e6da39c0519d482d17210f6ff15a10e1cfe879a826bf980fec
+    dependencies:
+    - name: idf
+      version: '>=5.0'
+    - git: https://github.com/lolrobbe2/esp_modem_temp
+      name: esp_modem
+      version: '*'
+    source:
+      git: https://github.com/lolrobbe2/KastaarModem
+      path: .
+      type: git
+    targets:
+    - esp32s3
+    version: 249c52940bd93e1f745d217dcf893ee29d63d5ae
+direct_dependencies:
+- idf
+- lolrobbe2/kastaar-modem
+manifest_hash: a7b967b183e6a0d6e27a73edfc7b37c13f157a892da3902535c767d047419c75
+target: esp32s3
+version: 2.0.0

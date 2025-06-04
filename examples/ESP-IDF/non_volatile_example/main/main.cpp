@@ -43,5 +43,5 @@ VYg4UI2D74WfVxn+NyVd2/aXTvSBp8VgyV3odA==\r\n\
 extern "C" void app_main(void)
 {
     modem.init("soracom.io",DEFAULT_CONFIG);
-    memory.write(caCert,)
+    memory.write(caCert,5,NonVolatileMemory::CERTIFICATE);
 }
