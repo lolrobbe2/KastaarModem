@@ -8,7 +8,7 @@
 #include <string_view>
 namespace kastaarModem::tls 
 {
-    constexpr std::string_view NVM_TAG = "NonVolatilememory";
+    constexpr const char* NVM_TAG = "NonVolatilememory";
     class NonVolatileMemory
     {
         public:

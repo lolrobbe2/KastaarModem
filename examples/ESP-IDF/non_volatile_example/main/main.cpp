@@ -4,13 +4,6 @@
 #include <tls/NonVolatile.hpp>
 #include <esp_mac.h>
 
-struct PingPacket
-{
-    uint8_t macAddress[6];
-    uint8_t counterLow = 0;
-    uint8_t counterHigh = 0;
-};
-
 const char* TAG = "Non volatile example";
 KastaarModem modem;
 NonVolatileMemory memory;
