@@ -43,14 +43,18 @@ extern "C" void app_main(void)
 
         while (socket.available())
         {
+            
             uint32_t received;
+            /*
             int64_t startTime = esp_timer_get_time(); // Time before receive
-
+            */
             socket.receive(dataBuffer,3000,received);
+            /*
             int64_t endTime = esp_timer_get_time(); // Time after receive
             int64_t durationMs = (endTime - startTime) / 1000;
 
             ESP_LOGI("Socket", "Received %" PRId32" bytes in %" PRId64 " ms", received, durationMs);
+            */
             ESP_LOGI("Socket", "Line: %.*s", static_cast<int>(received),dataBuffer.data());
         }
     }
