@@ -30,36 +30,4 @@ extern "C" void app_main(void)
     }
 
     modem.init("soracom.io",DEFAULT_CONFIG);
-
-    if(modem.connect() == esp_modem::command_result::FAIL){
-        ESP_LOGE(TAG, "could not connect the modem");
-    } else {
-        ESP_LOGI(TAG, "connected to network succesfully");
-    }
-
-    if(socket.config() == esp_modem::command_result::OK) {
-        ESP_LOGI(TAG, "configured succesfully");
-    } else {
-        ESP_LOGE(TAG, "could not configure the socket");
-    }
-
-    if (socket.dial("walterdemo.quickspot.io",1999,kastaarModem::socket::UDP) == esp_modem::command_result::OK) {
-        ESP_LOGI(TAG, "connected  to demo server");
-    } else {
-        ESP_LOGE(TAG, "could not conect to the demo server");
-    }
-    
-    for (;;)
-    {
-        if (socket.sendMinimal(packet) != esp_modem::command_result::OK) {
-            ESP_LOGE(TAG, "Failed to send packet. Attempt #%d", counter);
-        } else {
-            ESP_LOGI(TAG, "Packet sent successfully. Counter: %d", counter);
-        }
-        packet.counterLow = counter >> 8;
-        packet.counterHigh = counter & 0xFF;
-        counter++;
-        vTaskDelay(pdMS_TO_TICKS(5000)); // Optional delay to avoid spamming
-    }
-
 }

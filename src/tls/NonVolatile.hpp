@@ -46,5 +46,7 @@ namespace kastaarModem::tls
   
     
 }
+using NonVolatileMemory = kastaarModem::tls::NonVolatileMemory;
+
 #endif
 #endif
