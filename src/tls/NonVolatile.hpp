@@ -1,5 +1,5 @@
 #include <sdkconfig.h>
-#if !CONFIG_KASTAAR_ENABLE_NVM
+#if CONFIG_KASTAAR_ENABLE_NVM
 #ifndef _TLS_MANAGER_HPP_
 #define _TLS_MANAGER_HPP_
 #include <cstdint>

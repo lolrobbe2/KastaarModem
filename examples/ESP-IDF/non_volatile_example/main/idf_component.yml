@@ -1,5 +1,5 @@
 dependencies:
   idf: ">=5.0.0"
   lolrobbe2/kastaar-modem:
-    version: "feat-#1"
+    version: "feat-TLS"
     git: "https://github.com/lolrobbe2/KastaarModem"
