@@ -36,6 +36,6 @@ namespace kastaarModem::tls
         command += ",\"\",\"\",0,0,0";
         return KastaarModem::commandCommon(
             command
-        );
+        ,1200);
     }
 }

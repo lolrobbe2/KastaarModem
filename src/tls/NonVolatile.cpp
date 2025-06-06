@@ -20,7 +20,7 @@ namespace kastaarModem::tls
 
     esp_modem::command_result NonVolatileMemory::write(const std::string_view data, const uint8_t slotIdx, const DataType type)
     {
-        return write((const uint8_t)data.data(),data.size(),slotIdx,type);
+        return write((const uint8_t*)data.data(),data.size(),slotIdx,type);
     }
 
     std::string NonVolatileMemory::getDataTypeString(const DataType type)
