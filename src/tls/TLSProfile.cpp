@@ -13,6 +13,11 @@ namespace kastaarModem::tls
             ESP_LOGD("Socket","could find a free socket");
         }
     }
+
+    TLSProfile::~TLSProfile() 
+    {
+        TLSManager::freeProfile(profileId);
+    }
     esp_modem::command_result TLSProfile::config(
         TLSVersion version, VertificationBits verificationMask,
         uint8_t caCertificateId, uint8_t clientCertificateId,

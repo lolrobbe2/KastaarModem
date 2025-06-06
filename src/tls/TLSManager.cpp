@@ -33,8 +33,7 @@ namespace kastaarModem::tls
         }
     }
 
-    uint8_t TLSManager::toIndex(uint8_t profileId)
-    {
+    constexpr uint8_t TLSManager::toIndex(uint8_t profileId) {
         return profileId - 1;
     }
 }
