@@ -45,4 +45,7 @@ namespace kastaarModem::tls
             command
         ,1200);
     }
+    esp_modem::command_result TLSProfile::reset() {
+        return KastaarModem::commandCommon("AT+SQNSPCFG=" + std::to_string(profileId) + ",255", 1200);
+    }
 }

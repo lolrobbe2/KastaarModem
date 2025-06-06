@@ -64,7 +64,12 @@ extern "C" void app_main(void)
     memory.write(caCert,5,NonVolatileMemory::CERTIFICATE);
     memory.write(walterClientCert, 6, NonVolatileMemory::CERTIFICATE);
     memory.write(walterClientKey, 11, NonVolatileMemory::PRIVATE_KEY);
-
-    profile.config(TLSProfile::TLS_12,(TLSProfile::VertificationBits)(TLSProfile::URL_VALIDATION | TLSProfile::CERTIFICATE_VALIDATION),5,6,11);
-    
+    /*
+    if(profile.config(TLSProfile::TLS_12,(TLSProfile::VertificationBits)(TLSProfile::URL_VALIDATION | TLSProfile::CERTIFICATE_VALIDATION),5,6,11) != esp_modem::command_result::OK) {
+        ESP_LOGE("TLS", "could not configure profile");
+    }
+    */
+    if(profile.reset() != esp_modem::command_result::OK) {
+        ESP_LOGE("TLS", "could not reset profile");
+    }
 }

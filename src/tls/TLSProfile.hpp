@@ -32,9 +32,18 @@ namespace kastaarModem::tls
         };
         TLSProfile();
         ~TLSProfile();
+        
+        /**
+         * @brief configiures the TLS profile.
+         */
         esp_modem::command_result config(TLSVersion version, VertificationBits verificationMask, uint8_t caCertificateId,uint8_t clientCertificateId, uint8_t clientPrivKeyId);
+        
+        /**
+         * @brief reset the TLS profile.
+         */
+        esp_modem::command_result reset();
 
-      private:
+    private:
         uint8_t profileId = 0;
     };
 }
