@@ -1,5 +1,5 @@
 #include <sdkconfig.h>
-#if CONFIG_KASTAAR_ENABLE_TLS
+#if !CONFIG_KASTAAR_ENABLE_TLS
 #ifndef _TLS_PROFILE_HPP_
 #define _TLS_PROFILE_HPP_
 #include <esp_bit_defs.h>
@@ -34,7 +34,13 @@ namespace kastaarModem::tls
         ~TLSProfile();
         
         /**
-         * @brief configiures the TLS profile.
+         * @brief configures the TLS profile.
+         * 
+         * @param [in] version The TLS version to use.
+         * @param [in] verificationMask the verification mask for the TLS profile.
+         * @param [in] caCertificateId the NVM slot index/id where the caCertificateId is stored.
+         * @param [in] clientCertificateId the NVM slot index/id where the clientCertificateId is stored.
+         * @param [in] clientPrivKeyId the NVM slot index/id where the clientPrivKeyId is stored.
          */
         esp_modem::command_result config(TLSVersion version, VertificationBits verificationMask, uint8_t caCertificateId,uint8_t clientCertificateId, uint8_t clientPrivKeyId);
         
