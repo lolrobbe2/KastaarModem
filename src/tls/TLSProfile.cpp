@@ -38,7 +38,7 @@ namespace kastaarModem::tls
         command += ",";
 
         if(clientPrivKeyId != 0xff)
-            command = std::to_string(clientPrivKeyId);
+            command += std::to_string(clientPrivKeyId);
         
         command += ",\"\",\"\",0,0,0";
         return KastaarModem::commandCommon(
