@@ -25,7 +25,9 @@ namespace kastaarModem::tls
     {
         std::string command = "AT+SQNSPCFG=" 
             + std::to_string(profileId) 
-            + "," + std::to_string(version) + ",\"\",";
+            + "," + std::to_string(version) + ",\"\","
+            + std::to_string(verificationMask)
+            + ",";
 
         if (caCertificateId != 0xff) 
             command += std::to_string(caCertificateId);
