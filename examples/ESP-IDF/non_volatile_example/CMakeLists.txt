@@ -4,11 +4,5 @@
 # CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)
 
-# Recursively find all .cpp files in src/
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-
-idf_component_register(
-    SRCS ${SOURCES}
-    INCLUDE_DIRS "src"
-    REQUIRES esp_modem driver nvs_flash
-)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(non_volatile_example)

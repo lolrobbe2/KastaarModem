@@ -14,7 +14,7 @@ dependencies:
       type: idf
     version: 5.4.0
   lolrobbe2/kastaar-modem:
-    component_hash: 59667d373fcd1816a9b41a4af2f649a4d14d06d59f8d00d31d465d60c2008d53
+    component_hash: 06c8dd9ae2dceb274a116625c4e2f4667fd7d230dce1ed3da7122a15673ba695
     dependencies:
     - name: idf
       version: '>=5.0'
@@ -27,10 +27,10 @@ dependencies:
       type: git
     targets:
     - esp32s3
-    version: b2bc2336d9793aa8830b78fa87e16afffedc67dc
+    version: 24c3eebac2126cc4915d73df2aa5c015935b464a
 direct_dependencies:
 - idf
 - lolrobbe2/kastaar-modem
-manifest_hash: e96a53cca34377f0620f7e2ed7ee2cc531469e37ab63d34ca17a2edb8812b26e
+manifest_hash: a7b967b183e6a0d6e27a73edfc7b37c13f157a892da3902535c767d047419c75
 target: esp32s3
 version: 2.0.0
