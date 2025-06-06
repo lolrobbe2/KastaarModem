@@ -2,11 +2,13 @@
 #include <esp_log.h>
 #include <KastaarModem.hpp>
 #include <tls/NonVolatile.hpp>
+#include <tls/TLSProfile.hpp>
 #include <esp_mac.h>
 
 const char* TAG = "Non volatile example";
 KastaarModem modem;
 NonVolatileMemory memory;
+TLSProfile profile;
 /**
  * @brief CA root certificate for DTLS (chain with intermediate: bandwidth!)
  */
@@ -33,8 +35,36 @@ BAMDA0cAMEQCID7AcgACnXWzZDLYEainxVDxEJTUJFBhcItO77gcHPZUAiAu/ZMO\r\n\
 VYg4UI2D74WfVxn+NyVd2/aXTvSBp8VgyV3odA==\r\n\
 -----END CERTIFICATE-----\r\n";
 
+/**
+ * @brief Walter client certificate for DTLS
+ */
+const char *walterClientCert = "-----BEGIN CERTIFICATE-----\r\n\
+MIIBNTCB3AICEAEwCgYIKoZIzj0EAwMwJDELMAkGA1UEBhMCQkUxFTATBgNVBAMM\r\n\
+DGludGVybWVkaWF0ZTAeFw0yNDAzMjUxMDU5MzRaFw00NDA0MDkxMDU5MzRaMCkx\r\n\
+CzAJBgNVBAYTAkJFMRowGAYDVQQDDBFsaXRlMDAwMS4xMTExMTExMTBZMBMGByqG\r\n\
+SM49AgEGCCqGSM49AwEHA0IABPnA7m6yDd0w6iNuKWJ5T3eMB38Upk1yfM+fUUth\r\n\
+AY/qh/BM8JYqG0KFpbR0ymNe+KU0m2cUCPR1QIUVvp3sIYYwCgYIKoZIzj0EAwMD\r\n\
+SAAwRQIgDkAa7P78ieIamFqj8el2zL0oL/VHBYcTQL9/ZzsJBSkCIQCRFMsbIHc/\r\n\
+AiKVsr/pbTYtxbyz0UJKUlVoM2S7CjeAKg==\r\n\
+-----END CERTIFICATE-----\r\n";
+
+/**
+ * @brief Walter client private key for DTLS
+ */
+const char *walterClientKey = "-----BEGIN EC PRIVATE KEY-----\r\n\
+MHcCAQEEIHsCxTfyp5l7OA0RbKTKkfbTOeZ26WtpfduUvXD6Ly0YoAoGCCqGSM49\r\n\
+AwEHoUQDQgAE+cDubrIN3TDqI24pYnlPd4wHfxSmTXJ8z59RS2EBj+qH8Ezwliob\r\n\
+QoWltHTKY174pTSbZxQI9HVAhRW+newhhg==\r\n\
+-----END EC PRIVATE KEY-----\r\n";
+
 extern "C" void app_main(void)
 {
     modem.init("soracom.io",DEFAULT_CONFIG);
+
     memory.write(caCert,5,NonVolatileMemory::CERTIFICATE);
+    memory.write(walterClientCert, 6, NonVolatileMemory::CERTIFICATE);
+    memory.write(walterClientKey, 7, NonVolatileMemory::PRIVATE_KEY);
+
+    profile.config(TLSProfile::TLS_12,(TLSProfile::VertificationBits)(TLSProfile::URL_VALIDATION | TLSProfile::CERTIFICATE_VALIDATION),5,6,7);
+    
 }

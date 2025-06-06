@@ -2,7 +2,7 @@
 #if CONFIG_KASTAAR_ENABLE_TLS
 #ifndef _TLS_PROFILE_HPP_
 #define _TLS_PROFILE_HPP_
-#define BIT(x) (1U << (x))
+#include <esp_bit_defs.h>
 #include <cxx_include/esp_modem_types.hpp>
 
 namespace kastaarModem::tls 
@@ -38,5 +38,8 @@ namespace kastaarModem::tls
         uint8_t profileId = 0;
     };
 }
+
+using TLSProfile = kastaarModem::tls::TLSProfile;
+
 #endif
 #endif
