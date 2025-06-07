@@ -1,2 +1,3 @@
 .vscode/
 examples/ESP-IDF/socket_example/dependencies.lock
+build/**

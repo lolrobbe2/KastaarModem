@@ -229,7 +229,7 @@ namespace kastaarModem::socket {
     };
 
     #pragma region TEMPLATED_FUNCTIONS
-#if KASTAAR_ENABLE_SEND_MINIMAL
+#if CONFIG_KASTAAR_ENABLE_SEND_MINIMAL
     template <typename T>
     inline esp_modem::command_result Socket::sendMinimal(const T &data, const std::string &ipAddr, const uint16_t port, const releaseAssistanceInformation RAI)
     {
