@@ -36,6 +36,12 @@ menu "Kastaar Modem"
         endmenu
     endif
 
+    config KASTAAR_ENABLE_COAP
+        bool "Enable CoAP functionality"
+        default y
+        help
+            Enable socket functions for the kastaar modem
+
     config KASTAAR_ENABLE_NVM
         bool "Enable NVM funtionality (Non Volatile Memory)"
         default y
