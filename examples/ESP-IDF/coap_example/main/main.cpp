@@ -6,10 +6,9 @@
 
 const char* TAG = "Non volatile example";
 KastaarModem modem;
-CoAPProfile
+CoAPProfile profile;
 extern "C" void app_main(void)
 {
     modem.init("soracom.io",DEFAULT_CONFIG);
-    
-    
+    profile.config("coap.me", 5683,nullptr);
 }
