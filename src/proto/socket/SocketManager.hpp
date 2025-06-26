@@ -30,9 +30,6 @@ namespace kastaarModem::socket
     private:
             static inline Socket* sockets[5] = { nullptr };
     };
-    
-   
-    
 }
 #endif
 #endif

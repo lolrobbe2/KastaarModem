@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <esp_log.h>
 #include <KastaarModem.hpp>
 #include <proto/socket/Socket.hpp>
@@ -12,7 +11,6 @@ struct PingPacket
 };
 
 
-using Socket = kastaarModem::socket::Socket;
 KastaarModem modem;
 Socket socket;
 PingPacket packet;

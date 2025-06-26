@@ -49,6 +49,12 @@ namespace kastaarModem::tls
          */
         esp_modem::command_result reset();
 
+        /**
+         * @brief returns the native id.
+         */
+        uint8_t native() { return profileId; }
+
+        operator uint8_t() const { return profileId; }
     private:
         uint8_t profileId = 0;
     };

@@ -31,6 +31,6 @@ dependencies:
 direct_dependencies:
 - idf
 - lolrobbe2/kastaar-modem
-manifest_hash: a7b967b183e6a0d6e27a73edfc7b37c13f157a892da3902535c767d047419c75
+manifest_hash: 2a232a0d8769bd6c3c51fd51de85cbe745629300b7acced9d722cb95be1ba159
 target: esp32s3
 version: 2.0.0

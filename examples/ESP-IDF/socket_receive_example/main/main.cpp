@@ -7,6 +7,7 @@
 
 KastaarModem modem;
 Socket socket;
+
 extern "C" void app_main(void)
 {
     modem.init("soracom.io",DEFAULT_CONFIG);
