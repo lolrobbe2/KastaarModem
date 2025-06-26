@@ -52,7 +52,7 @@ namespace kastaarModem::tls
         /**
          * @brief returns the native id.
          */
-        uint8_t native() { return profileId; }
+        uint8_t native() const { return profileId; }
 
         operator uint8_t() const { return profileId; }
     private:
