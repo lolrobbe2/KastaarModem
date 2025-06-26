@@ -20,5 +20,7 @@ namespace kastaarModem::CoAP
         uint8_t profileId = 0;
     };
 }
+using CoAPProfile = kastaarModem::CoAP::CoAPProfile;
+
 #endif
 #endif
