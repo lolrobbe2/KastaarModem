@@ -5,7 +5,7 @@
 #include <charconv>
 namespace kastaarModem::socket
 {
-    void SocketManager::urcHandler(std::string_view line) 
+    void SocketManager::urcHandler(std::string_view line, uint8_t profileId) 
     {
         std::string temp { line }; /* this will be cached */
 

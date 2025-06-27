@@ -17,7 +17,7 @@ namespace kastaarModem::socket
         /**
          * @brief This is the socket URC handler
          */
-        static void urcHandler(std::string_view line);
+        static void urcHandler(std::string_view line, uint8_t profileId);
 
     protected:
         friend class Socket;

@@ -13,6 +13,11 @@ namespace kastaarModem::CoAP
     class CoAPManager
     {
     public:
+        /**
+         * @brief This is the coap URC handler
+         */
+        static void urcHandler(std::string_view line, uint8_t profileId);
+
     protected:
         friend class CoAPProfile;
         static uint8_t getFreeCoAPProfile(CoAPProfile *profile);

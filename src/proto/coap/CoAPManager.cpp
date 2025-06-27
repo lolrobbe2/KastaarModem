@@ -4,6 +4,9 @@
 
 #if CONFIG_KASTAAR_ENABLE_COAP
 namespace kastaarModem::CoAP {
+void  CoAPManager::urcHandler(std::string_view line, uint8_t profileId) {
+    
+}
 uint8_t CoAPManager::getFreeCoAPProfile(CoAPProfile *profile) {
     for (uint8_t i = 0; i < 6; ++i) {
         if (profiles[i] == nullptr) {

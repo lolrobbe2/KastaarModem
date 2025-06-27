@@ -12,6 +12,7 @@
 #include <esp_netif_ppp.h>
 #include <nvs_flash.h>
 #include <proto/socket/SocketManager.hpp>
+#include <proto/coap/CoAPManager.hpp>
 
 bool startsWithAny(std::string_view line,
                    const std::initializer_list<std::string_view> &prefixes) {
@@ -27,10 +28,30 @@ void KastaarModem::urcHandler(std::string_view line)
 {
     /* this function handles the routing of the URC's*/
     ESP_LOGI("KastaarModem", "URC: %.*s", static_cast<int>(line.length()),line.data());
+    // Find the first colon
+    size_t colonPos = line.find(':');
+    if (colonPos == std::string_view::npos) return;
+
+    // Look for the first space after the colon
+    size_t spacePos = line.find(' ', colonPos);
+    if (spacePos == std::string_view::npos) return;
+
+    // Find the comma after the space
+    size_t commaPos = line.find(',', spacePos);
+    if (commaPos == std::string_view::npos) return;
+
+    // Extract the substring containing the number
+    std::string_view numberStr = line.substr(spacePos + 1, commaPos - spacePos - 1);
+
+    // Convert to integer
+    uint8_t profileId = std::profile(std::string(numberStr).c_str());
     if (startsWithAny(line,{"+SQNSRING: "}))
     {
       /* SOCKETS */
-      kastaarModem::socket::SocketManager::urcHandler(line);
+      kastaarModem::socket::SocketManager::urcHandler(line, profileId);
+    } else if(startsWithAny(line,{"+SQNCOAP"})) {
+      /* COAP */
+      kastaarModem::CoAP::CoAPManager::urcHandler(line, profileId);
     }
 }
 
