@@ -118,9 +118,9 @@ namespace kastaarModem::CoAP
         esp_modem::command_result postNon(uint8_t* data, size_t len);
 
         template <typename T>
-        esp_modem::command_result post(uint8_t *data, size_t len);
+        esp_modem::command_result post(const T &obj);
         template <typename T>
-        esp_modem::command_result postNon(uint8_t *data, size_t len);
+        esp_modem::command_result postNon(const T &obj);
         #pragma endregion
 
         #pragma region PUT
