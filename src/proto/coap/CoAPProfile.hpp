@@ -168,12 +168,12 @@ namespace kastaarModem::CoAP
 
     #pragma region POST
     template <typename T>
-    inline esp_modem::command_result CoAPProfile::post(uint8_t *data, size_t len)
+    inline esp_modem::command_result CoAPProfile::post(const T &obj)
     {
         return post((uint8_t *)&obj, sizeof(T));
     }
     template <typename T>
-    inline esp_modem::command_result CoAPProfile::postNon(uint8_t *data, size_t len)
+    inline esp_modem::command_result CoAPProfile::postNon(const T &obj)
     {
         return postNon((uint8_t *)&obj, sizeof(T));
     }
