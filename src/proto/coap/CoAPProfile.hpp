@@ -147,7 +147,7 @@ namespace kastaarModem::CoAP
         esp_modem::command_result sendMethodData(const Type sendType, const Method method,uint8_t* data, size_t len);
         uint8_t profileId = 0;
     protected:
-        friend class
+        friend class CoAPManager;
         std::function<void(CoAPEventType, CoAPEventData)> eventHandler;
     };
 
