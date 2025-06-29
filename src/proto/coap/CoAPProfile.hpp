@@ -148,7 +148,7 @@ namespace kastaarModem::CoAP
         uint8_t profileId = 0;
     protected:
         friend class
-        std::function<CoAPEventType,CoAPEventData> eventHandler;
+        std::function<void(CoAPEventType, CoAPEventData)> eventHandler;
     };
 
 
