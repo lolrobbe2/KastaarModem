@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <string_view>
 #include "CoAPProfile.hpp"
+
 namespace kastaarModem::CoAP
 {
     constexpr const char* COAP_MANAGER_TAG = "CoAPManager";

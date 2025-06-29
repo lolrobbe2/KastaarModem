@@ -61,12 +61,30 @@ namespace kastaarModem::CoAP
         ACK = 2,
         RST = 3
     };
+
+    enum CoAPEventType
+    {
+        CONNECTED,
+        RING,
+    };
+
+    struct CoAPRingData
+    {
+        /* data */
+    };
+    
+
+    union CoAPEventData
+    {
+        CoAPRingData ringData;
+    };
     
     class CoAPProfile
     {
     public:
         CoAPProfile();
         ~CoAPProfile();
+
         esp_modem::command_result config(const std::string& addr,const uint16_t port,const TLSProfile* p_profile);
         /**
          * @brief this functions set the header token.
@@ -128,7 +146,12 @@ namespace kastaarModem::CoAP
         esp_modem::command_result setOption(const Method method,const CoAPOptCode option,const std::initializer_list<std::string> optionValues);
         esp_modem::command_result sendMethodData(const Type sendType, const Method method,uint8_t* data, size_t len);
         uint8_t profileId = 0;
+    protected:
+        friend class
+        std::function<CoAPEventType,CoAPEventData> eventHandler;
     };
+
+
     #pragma region SEND
     #pragma region GET
     template <typename T>
