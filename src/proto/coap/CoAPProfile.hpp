@@ -85,7 +85,7 @@ namespace kastaarModem::CoAP
         CoAPProfile();
         ~CoAPProfile();
 
-        esp_modem::command_result config(const std::string& addr,const uint16_t port,const TLSProfile* p_profile);
+        esp_modem::command_result config(const std::string& addr,const uint16_t port,const TLSProfile* p_profile = nullptr);
         /**
          * @brief this functions set the header token.
          */
